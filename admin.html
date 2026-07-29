@@ -1,576 +1,749 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Админ-панель — 3D Print Calculator</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #ffffff;
-      --bg-card: #f6f8fa;
-      --bg-input: #ffffff;
-      --text: #1a1a1a;
-      --text-secondary: #6b7280;
-      --text-muted: #9ca3af;
-      --border: #e0e4e8;
-      --danger: #dc2626;
-      --success: #16a34a;
-      --radius: 12px;
-      --radius-sm: 8px;
-      --font: -apple-system, 'Segoe UI', system-ui, sans-serif;
-    }
-    html { font-size: 16px; }
-    body {
-      font-family: var(--font);
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.5;
-      padding: 24px 16px 48px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .container { max-width: 800px; width: 100%; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Админ-панель — 3D Print Calculator</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#ffffff;--bg-card:#f6f8fa;--bg-input:#ffffff;--text:#1a1a1a;--text-secondary:#6b7280;--text-muted:#9ca3af;--border:#e0e4e8;--danger:#dc2626;--success:#16a34a;--radius:12px;--radius-sm:8px;--font:-apple-system,'Segoe UI',system-ui,sans-serif}
+html{font-size:16px}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.5;padding:24px 16px 48px;display:flex;flex-direction:column;align-items:center}
+.container{max-width:900px;width:100%}
+h1{font-size:1.5rem;font-weight:700;margin-bottom:4px}
+h2{font-size:1.1rem;font-weight:600;margin:0 0 12px}
+p.desc{color:var(--text-secondary);font-size:.9rem;margin-bottom:24px}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px 18px;margin-bottom:16px}
+.card-title{font-size:1.05rem;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
 
-    h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
-    p.desc { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 24px; }
+.login-box{max-width:380px;margin:60px auto;text-align:center}
+.login-box .field{margin-bottom:14px;text-align:left}
+.login-box .field label{display:block;font-size:.82rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px}
+.login-box .field input{width:100%;padding:10px 12px;font-size:.95rem;font-family:var(--font);background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);outline:none}
+.login-box .field input:focus{border-color:#000}
+.login-error{color:var(--danger);font-size:.85rem;margin-top:8px}
 
-    /* --- Карточка --- */
-    .card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 24px 20px;
-      margin-bottom: 16px;
-    }
-    .card-title {
-      font-size: 1.05rem;
-      font-weight: 600;
-      margin-bottom: 16px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--border);
-    }
+.config-table{width:100%;border-collapse:collapse;font-size:.88rem}
+.config-table th{text-align:left;font-size:.75rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.03em;padding:6px 8px 5px 8px;border-bottom:1px solid var(--border)}
+.config-table td{padding:5px 8px;border-bottom:1px solid var(--border);vertical-align:middle}
+.config-table tr:last-child td{border-bottom:none}
+.config-table input[type="number"],.config-table input[type="text"],.config-table select{width:100%;padding:5px 7px;font-size:.82rem;font-family:var(--font);background:var(--bg-input);border:1px solid var(--border);border-radius:4px;color:var(--text);outline:none}
+.config-table input:focus,.config-table select:focus{border-color:#000}
+.config-table input[type="checkbox"]{width:16px;height:16px;cursor:pointer;accent-color:#000}
+.config-table .key-col{font-weight:500;white-space:nowrap;color:var(--text-secondary);font-size:.8rem}
+.config-table .group-row td{font-weight:600;font-size:.82rem;padding-top:10px;background:var(--bg)}
 
-    /* --- Форма логина --- */
-    .login-box {
-      max-width: 360px;
-      margin: 60px auto;
-      text-align: center;
-    }
-    .login-box .field { margin-bottom: 14px; text-align: left; }
-    .login-box .field label {
-      display: block;
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      margin-bottom: 4px;
-    }
-    .login-box .field input {
-      width: 100%;
-      padding: 10px 12px;
-      font-size: 0.95rem;
-      font-family: var(--font);
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text);
-      outline: none;
-    }
-    .login-box .field input:focus { border-color: #000; }
-    .login-error {
-      color: var(--danger);
-      font-size: 0.85rem;
-      margin-top: 8px;
-    }
+.btn{padding:9px 20px;font-size:.88rem;font-weight:600;font-family:var(--font);border:none;border-radius:var(--radius-sm);cursor:pointer;transition:background .2s,transform .1s}
+.btn:hover{transform:scale(.98)}
+.btn:active{transform:scale(.96)}
+.btn-primary{background:#000;color:#fff}
+.btn-primary:hover{background:#333}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover{background:#b91c1c}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border)}
+.btn-outline:hover{background:var(--bg-card)}
+.btn-group{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.btn-sm{padding:5px 12px;font-size:.8rem}
+.btn-success{background:var(--success);color:#fff}
 
-    /* --- Таблица конфига --- */
-    .config-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-    .config-table th {
-      text-align: left;
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      padding: 8px 10px 6px 10px;
-      border-bottom: 1px solid var(--border);
-    }
-    .config-table td {
-      padding: 6px 10px;
-      border-bottom: 1px solid var(--border);
-      vertical-align: middle;
-    }
-    .config-table tr:last-child td { border-bottom: none; }
-    .config-table input[type="number"],
-    .config-table input[type="text"] {
-      width: 100%;
-      padding: 6px 8px;
-      font-size: 0.85rem;
-      font-family: var(--font);
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      border-radius: 5px;
-      color: var(--text);
-      outline: none;
-    }
-    .config-table input:focus { border-color: #000; }
-    .config-table input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-      cursor: pointer;
-      accent-color: #000;
-    }
-    .config-table .key-col { font-weight: 500; white-space: nowrap; color: var(--text-secondary); font-size: 0.82rem; }
-    .config-table .group-row td {
-      font-weight: 600;
-      font-size: 0.85rem;
-      padding-top: 12px;
-      background: var(--bg);
-    }
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#000;color:#fff;padding:10px 20px;border-radius:var(--radius-sm);font-size:.85rem;opacity:0;transition:opacity .3s;pointer-events:none;z-index:100}
+.toast.show{opacity:1}
 
-    /* --- Кнопки --- */
-    .btn {
-      padding: 10px 24px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      font-family: var(--font);
-      border: none;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
-    }
-    .btn:hover { transform: scale(0.98); }
-    .btn:active { transform: scale(0.96); }
-    .btn-primary { background: #000; color: #fff; }
-    .btn-primary:hover { background: #333; }
-    .btn-danger { background: var(--danger); color: #fff; }
-    .btn-danger:hover { background: #b91c1c; }
-    .btn-outline {
-      background: transparent;
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-    .btn-outline:hover { background: var(--bg-card); }
-    .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+.tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.tab{padding:8px 18px;font-size:.85rem;font-weight:500;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;background:var(--bg);color:var(--text-secondary);transition:all .15s}
+.tab:hover{border-color:#888}
+.tab.active{background:#000;color:#fff;border-color:#000}
 
-    .toast {
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #000;
-      color: #fff;
-      padding: 10px 20px;
-      border-radius: var(--radius-sm);
-      font-size: 0.85rem;
-      opacity: 0;
-      transition: opacity 0.3s;
-      pointer-events: none;
-      z-index: 100;
-    }
-    .toast.show { opacity: 1; }
+.executor-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;background:var(--bg)}
+.executor-row .name{font-weight:600}
+.executor-row .actions{display:flex;gap:6px}
+.executor-row.pending{border-color:#f0d78a;background:#fff8e6}
 
-    /* --- Адаптив --- */
-    @media (max-width: 640px) {
-      body { padding: 16px 10px 32px; }
-      .card { padding: 16px 12px; }
-      .config-table { font-size: 0.82rem; }
-      .config-table td, .config-table th { padding: 4px 6px; }
-      .config-table input[type="number"] { min-width: 60px; }
-    }
-  </style>
+.url-box{display:flex;gap:8px;margin-top:10px}
+.url-box input{flex:1;padding:9px 12px;font-size:.82rem;font-family:var(--font);border:1px solid var(--border);border-radius:var(--radius-sm);outline:none;background:var(--bg-input);color:var(--text)}
+.url-box input:focus{border-color:#000}
+.qr-box{text-align:center;margin-top:12px}
+.qr-box img{border:1px solid var(--border);border-radius:8px;max-width:180px}
+
+.contact-line{margin-bottom:10px}
+.contact-line label{display:block;font-size:.78rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px}
+.contact-line input{width:100%;padding:8px 10px;font-size:.9rem;font-family:var(--font);background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);outline:none}
+.contact-line input:focus{border-color:#000}
+
+.hidden{display:none!important}
+.mt-8{margin-top:8px}
+.mb-8{margin-bottom:8px}
+.text-center{text-align:center}
+.text-muted{color:var(--text-muted);font-size:.82rem}
+.flex{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+@media(max-width:640px){body{padding:16px 8px 32px}.card{padding:14px 10px}}
+</style>
 </head>
 <body>
-  <div class="container" id="app">
-    <!-- Заглушка -- сюда рендерит скрипт -->
-  </div>
+<div class="container" id="app"></div>
+<div class="toast" id="toast"></div>
 
-  <div class="toast" id="toast"></div>
+<script>
+// ===== CREDENTIALS =====
+var ADMIN_USER = 'admin';
+var ADMIN_PASS = 'admin123';
 
-  <script>
-    // ================================================================
-    //  УЧЁТНЫЕ ДАННЫЕ ДЛЯ ВХОДА
-    //  Можете сменить логин и пароль здесь.
-    // ================================================================
-    var ADMIN_USER = 'admin';
-    var ADMIN_PASS = 'admin123';
-
-    // ================================================================
-    //  ЭТАЛОННЫЙ КОНФИГ (дублируется из index.html)
-    // ================================================================
-    var defaultConfig = {
-      availability: {
-        sla: true,
+// ===== DEFAULT EXECUTOR CONFIG =====
+function defaultExecutorConfig(name) {
+  return {
+    executor: {
+      name: name || 'Исполнитель',
+      email: '',
+      telegram: '',
+      phone: ''
+    },
+    technologies: {
+      fdm: {
+        enabled: true, label: 'FDM',
         materials: {
-          pla: true,
-          petg: true,
-          abs: true,
-          resin: true
+          pla: { enabled: true, label: 'PLA', density: 1.24, pricePerGram: 5, timePerGram: 8, colors: ['Белый','Чёрный','Красный','Синий','Зелёный','Жёлтый','Оранжевый','Серый'] },
+          petg: { enabled: true, label: 'PETG', density: 1.27, pricePerGram: 7, timePerGram: 9, colors: ['Белый','Чёрный','Серый','Прозрачный','Синий','Красный'] },
+          abs: { enabled: true, label: 'ABS', density: 1.04, pricePerGram: 8, timePerGram: 10, colors: ['Белый','Чёрный','Серый'] },
+          tpu: { enabled: false, label: 'TPU (Flex)', density: 1.21, pricePerGram: 12, timePerGram: 14, colors: ['Чёрный','Белый','Красный'] },
+          nylon: { enabled: false, label: 'Nylon (PA)', density: 1.01, pricePerGram: 20, timePerGram: 8, colors: ['Белый','Чёрный'] },
+          asa: { enabled: false, label: 'ASA', density: 1.07, pricePerGram: 10, timePerGram: 11, colors: ['Белый','Чёрный','Серый'] },
+          pc: { enabled: false, label: 'Polycarbonate', density: 1.2, pricePerGram: 15, timePerGram: 12, colors: ['Прозрачный','Чёрный'] }
         }
       },
-      density: {
-        pla:   1.24,
-        petg:  1.27,
-        abs:   1.04,
-        resin: 1.15
-      },
-      materials: {
-        fdm: {
-          pla:  { pricePerGram: 5,  timePerGram: 8  },
-          petg: { pricePerGram: 7,  timePerGram: 9  },
-          abs:  { pricePerGram: 8,  timePerGram: 10 }
-        },
-        sla: {
-          resin: { pricePerGram: 15, timePerGram: 5  }
-        }
-      },
-      quality: {
-        '0.12': { priceMultiplier: 1.5, timeMultiplier: 1.6 },
-        '0.2':  { priceMultiplier: 1.0, timeMultiplier: 1.0 },
-        '0.28': { priceMultiplier: 0.8, timeMultiplier: 0.7 }
-      },
-      infill: {
-        '15':  { priceMultiplier: 0.85, timeMultiplier: 0.9 },
-        '50':  { priceMultiplier: 1.0,  timeMultiplier: 1.0 },
-        '100': { priceMultiplier: 1.3,  timeMultiplier: 1.4 }
-      },
-      postProcessing: {
-        fdm: 200,
-        sla: 300
-      },
-      minPrice: 500,
-      minTime:  30
-    };
-
-    // ================================================================
-    //  ЗАГРУЗКА КОНФИГА
-    // ================================================================
-    function loadConfig() {
-      try {
-        var saved = localStorage.getItem('pricingConfig');
-        if (saved) return JSON.parse(saved);
-      } catch (e) {}
-      return JSON.parse(JSON.stringify(defaultConfig));
-    }
-
-    function saveConfig(cfg) {
-      localStorage.setItem('pricingConfig', JSON.stringify(cfg, null, 2));
-    }
-
-    // ================================================================
-    //  ПРОВЕРКА АУТЕНТИФИКАЦИИ
-    // ================================================================
-    function getUrlParams() {
-      var params = {};
-      var search = window.location.search.substring(1);
-      if (!search) return params;
-      search.split('&').forEach(function(pair) {
-        var parts = pair.split('=');
-        if (parts.length === 2) {
-          params[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1]);
-        }
-      });
-      return params;
-    }
-
-    function checkAuth() {
-      var params = getUrlParams();
-      return params.name === ADMIN_USER && params.password === ADMIN_PASS;
-    }
-
-    // ================================================================
-    //  ТОСТ-УВЕДОМЛЕНИЕ
-    // ================================================================
-    function showToast(msg) {
-      var el = document.getElementById('toast');
-      el.textContent = msg;
-      el.classList.add('show');
-      setTimeout(function() { el.classList.remove('show'); }, 2500);
-    }
-
-    // ================================================================
-    //  РЕНДЕРИНГ ПАНЕЛИ УПРАВЛЕНИЯ
-    // ================================================================
-    function renderAdmin() {
-      var cfg = loadConfig();
-      var html = '';
-      html += '<div style="text-align:center;padding:20px 0 8px;">';
-      html += '<h1>Панель управления</h1>';
-      html += '<p class="desc">Редактирование цен и коэффициентов калькулятора. Изменения сохраняются в браузере.</p>';
-      html += '</div>';
-
-      // Доступность
-      html += '<div class="card">';
-      html += '<div class="card-title">Доступность</div>';
-      html += '<table class="config-table">';
-      html += '<tr><th>Параметр</th><th>Доступен</th></tr>';
-      html += '<tr><td class="key-col">SLA печать</td>';
-      html += '<td><input type="checkbox" id="avail-sla"' + (cfg.availability && cfg.availability.sla ? ' checked' : '') + '></td></tr>';
-      html += '<tr><td class="key-col">PLA</td>';
-      html += '<td><input type="checkbox" id="avail-pla"' + (cfg.availability && cfg.availability.materials && cfg.availability.materials.pla ? ' checked' : '') + '></td></tr>';
-      html += '<tr><td class="key-col">PETG</td>';
-      html += '<td><input type="checkbox" id="avail-petg"' + (cfg.availability && cfg.availability.materials && cfg.availability.materials.petg ? ' checked' : '') + '></td></tr>';
-      html += '<tr><td class="key-col">ABS</td>';
-      html += '<td><input type="checkbox" id="avail-abs"' + (cfg.availability && cfg.availability.materials && cfg.availability.materials.abs ? ' checked' : '') + '></td></tr>';
-      html += '<tr><td class="key-col">Смола (Resin)</td>';
-      html += '<td><input type="checkbox" id="avail-resin"' + (cfg.availability && cfg.availability.materials && cfg.availability.materials.resin ? ' checked' : '') + '></td></tr>';
-      html += '</table></div>';
-
-      html += '<div class="card">';
-      html += '<div class="card-title">Плотность материалов (г/см3)</div>';
-      html += '<table class="config-table">';
-      html += '<tr><th>Материал</th><th>Плотность</th></tr>';
-      var densityKeys = Object.keys(cfg.density);
-      for (var di = 0; di < densityKeys.length; di++) {
-        var k = densityKeys[di];
-        html += '<tr><td class="key-col">' + k + '</td>';
-        html += '<td><input type="number" step="0.01" id="density-' + k + '" value="' + cfg.density[k] + '"></td></tr>';
-      }
-      html += '</table></div>';
-
-      // Материалы FDM
-      html += '<div class="card">';
-      html += '<div class="card-title">FDM материалы — цена и время</div>';
-      html += '<table class="config-table">';
-      html += '<tr><th>Материал</th><th>Цена за грамм (руб)</th><th>Минут на грамм</th></tr>';
-      var fdmKeys = Object.keys(cfg.materials.fdm);
-      for (var fi = 0; fi < fdmKeys.length; fi++) {
-        var fk = fdmKeys[fi];
-        var m = cfg.materials.fdm[fk];
-        html += '<tr><td class="key-col">' + fk + '</td>';
-        html += '<td><input type="number" step="0.5" id="fdm-' + fk + '-price" value="' + m.pricePerGram + '"></td>';
-        html += '<td><input type="number" step="0.5" id="fdm-' + fk + '-time" value="' + m.timePerGram + '"></td></tr>';
-      }
-      html += '</table></div>';
-
-      // Материалы SLA
-      html += '<div class="card">';
-      html += '<div class="card-title">SLA материалы — цена и время</div>';
-      html += '<table class="config-table">';
-      html += '<tr><th>Материал</th><th>Цена за грамм (руб)</th><th>Минут на грамм</th></tr>';
-      var slaKeys = Object.keys(cfg.materials.sla);
-      for (var si = 0; si < slaKeys.length; si++) {
-        var sk = slaKeys[si];
-        var sm = cfg.materials.sla[sk];
-        html += '<tr><td class="key-col">' + sk + '</td>';
-        html += '<td><input type="number" step="0.5" id="sla-' + sk + '-price" value="' + sm.pricePerGram + '"></td>';
-        html += '<td><input type="number" step="0.5" id="sla-' + sk + '-time" value="' + sm.timePerGram + '"></td></tr>';
-      }
-      html += '</table></div>';
-
-      // Качество
-      html += '<div class="card">';
-      html += '<div class="card-title">Высота слоя — множители</div>';
-      html += '<table class="config-table">';
-      html += '<tr><th>Слой (мм)</th><th>Множитель цены</th><th>Множитель времени</th></tr>';
-      var qKeys = Object.keys(cfg.quality);
-      for (var qi = 0; qi < qKeys.length; qi++) {
-        var qk = qKeys[qi];
-        var qv = cfg.quality[qk];
-        html += '<tr><td class="key-col">' + qk + '</td>';
-        html += '<td><input type="number" step="0.05" id="qual-' + qk + '-price" value="' + qv.priceMultiplier + '"></td>';
-        html += '<td><input type="number" step="0.05" id="qual-' + qk + '-time" value="' + qv.timeMultiplier + '"></td></tr>';
-      }
-      html += '</table></div>';
-
-      // Заполнение
-      html += '<div class="card">';
-      html += '<div class="card-title">Заполнение — множители</div>';
-      html += '<table class="config-table">';
-      html += '<tr><th>Заполнение</th><th>Множитель цены</th><th>Множитель времени</th></tr>';
-      var iKeys = Object.keys(cfg.infill);
-      for (var ii = 0; ii < iKeys.length; ii++) {
-        var ik = iKeys[ii];
-        var iv = cfg.infill[ik];
-        html += '<tr><td class="key-col">' + ik + '%</td>';
-        html += '<td><input type="number" step="0.05" id="inf-' + ik + '-price" value="' + iv.priceMultiplier + '"></td>';
-        html += '<td><input type="number" step="0.05" id="inf-' + ik + '-time" value="' + iv.timeMultiplier + '"></td></tr>';
-      }
-      html += '</table></div>';
-
-      // Постобработка
-      html += '<div class="card">';
-      html += '<div class="card-title">Постобработка — доплата (руб)</div>';
-      html += '<table class="config-table">';
-      html += '<tr><th>Технология</th><th>Стоимость</th></tr>';
-      html += '<tr><td class="key-col">FDM</td><td><input type="number" step="10" id="post-fdm" value="' + cfg.postProcessing.fdm + '"></td></tr>';
-      html += '<tr><td class="key-col">SLA</td><td><input type="number" step="10" id="post-sla" value="' + cfg.postProcessing.sla + '"></td></tr>';
-      html += '</table></div>';
-
-      // Минимальные пороги
-      html += '<div class="card">';
-      html += '<div class="card-title">Минимальные значения</div>';
-      html += '<table class="config-table">';
-      html += '<tr><th>Параметр</th><th>Значение</th></tr>';
-      html += '<tr><td class="key-col">Мин. цена (руб)</td><td><input type="number" step="50" id="minPrice" value="' + cfg.minPrice + '"></td></tr>';
-      html += '<tr><td class="key-col">Мин. время (мин)</td><td><input type="number" step="5" id="minTime" value="' + cfg.minTime + '"></td></tr>';
-      html += '</table></div>';
-
-      // Кнопки
-      html += '<div class="btn-group">';
-      html += '<button class="btn btn-primary" id="saveBtn">Сохранить изменения</button>';
-      html += '<button class="btn btn-outline" id="resetBtn">Сбросить на defaults</button>';
-      html += '<button class="btn btn-outline" id="exportBtn">Скопировать config в буфер</button>';
-      html += '<a href="index.html" class="btn btn-outline" style="text-decoration:none;display:inline-flex;align-items:center;">На главную</a>';
-      html += '</div>';
-
-      document.getElementById('app').innerHTML = html;
-      bindAdminEvents();
-    }
-
-    // ================================================================
-    //  СБОР ДАННЫХ ИЗ ФОРМЫ
-    // ================================================================
-    function collectConfig() {
-      var cfg = JSON.parse(JSON.stringify(defaultConfig));
-
-      // Доступность
-      cfg.availability = {
-        sla: document.getElementById('avail-sla').checked,
+      sla: {
+        enabled: true, label: 'SLA',
         materials: {
-          pla:  document.getElementById('avail-pla').checked,
-          petg: document.getElementById('avail-petg').checked,
-          abs:  document.getElementById('avail-abs').checked,
-          resin: document.getElementById('avail-resin').checked
+          standard_resin: { enabled: true, label: 'Standard Resin', density: 1.15, pricePerGram: 15, timePerGram: 5, colors: ['Прозрачный','Белый','Серый','Чёрный'] },
+          tough_resin: { enabled: false, label: 'Tough Resin', density: 1.18, pricePerGram: 20, timePerGram: 5, colors: ['Чёрный','Серый'] },
+          flexible_resin: { enabled: false, label: 'Flexible Resin', density: 1.12, pricePerGram: 22, timePerGram: 5, colors: ['Прозрачный','Чёрный'] },
+          castable_resin: { enabled: false, label: 'Castable Resin', density: 1.1, pricePerGram: 25, timePerGram: 6, colors: ['Фиолетовый','Синий'] },
+          dental_resin: { enabled: false, label: 'Dental Resin', density: 1.17, pricePerGram: 30, timePerGram: 5, colors: ['Белый','Прозрачный'] }
         }
-      };
-
-      // Плотность
-      var densityKeys = Object.keys(cfg.density);
-      for (var di = 0; di < densityKeys.length; di++) {
-        var k = densityKeys[di];
-        cfg.density[k] = parseFloat(document.getElementById('density-' + k).value) || cfg.density[k];
-      }
-
-      // FDM материалы
-      var fdmKeys = Object.keys(cfg.materials.fdm);
-      for (var fi = 0; fi < fdmKeys.length; fi++) {
-        var fk = fdmKeys[fi];
-        cfg.materials.fdm[fk].pricePerGram = parseFloat(document.getElementById('fdm-' + fk + '-price').value) || cfg.materials.fdm[fk].pricePerGram;
-        cfg.materials.fdm[fk].timePerGram  = parseFloat(document.getElementById('fdm-' + fk + '-time').value) || cfg.materials.fdm[fk].timePerGram;
-      }
-
-      // SLA материалы
-      var slaKeys = Object.keys(cfg.materials.sla);
-      for (var si = 0; si < slaKeys.length; si++) {
-        var sk = slaKeys[si];
-        cfg.materials.sla[sk].pricePerGram = parseFloat(document.getElementById('sla-' + sk + '-price').value) || cfg.materials.sla[sk].pricePerGram;
-        cfg.materials.sla[sk].timePerGram  = parseFloat(document.getElementById('sla-' + sk + '-time').value) || cfg.materials.sla[sk].timePerGram;
-      }
-
-      // Качество
-      var qKeys = Object.keys(cfg.quality);
-      for (var qi = 0; qi < qKeys.length; qi++) {
-        var qk = qKeys[qi];
-        cfg.quality[qk].priceMultiplier = parseFloat(document.getElementById('qual-' + qk + '-price').value) || cfg.quality[qk].priceMultiplier;
-        cfg.quality[qk].timeMultiplier  = parseFloat(document.getElementById('qual-' + qk + '-time').value) || cfg.quality[qk].timeMultiplier;
-      }
-
-      // Заполнение
-      var iKeys = Object.keys(cfg.infill);
-      for (var ii = 0; ii < iKeys.length; ii++) {
-        var ik = iKeys[ii];
-        cfg.infill[ik].priceMultiplier = parseFloat(document.getElementById('inf-' + ik + '-price').value) || cfg.infill[ik].priceMultiplier;
-        cfg.infill[ik].timeMultiplier  = parseFloat(document.getElementById('inf-' + ik + '-time').value) || cfg.infill[ik].timeMultiplier;
-      }
-
-      // Постобработка
-      cfg.postProcessing.fdm = parseFloat(document.getElementById('post-fdm').value) || cfg.postProcessing.fdm;
-      cfg.postProcessing.sla = parseFloat(document.getElementById('post-sla').value) || cfg.postProcessing.sla;
-
-      // Минимальные
-      cfg.minPrice = parseFloat(document.getElementById('minPrice').value) || cfg.minPrice;
-      cfg.minTime  = parseFloat(document.getElementById('minTime').value) || cfg.minTime;
-
-      return cfg;
-    }
-
-    // ================================================================
-    //  ПОДПИСКА НА КНОПКИ
-    // ================================================================
-    function bindAdminEvents() {
-      document.getElementById('saveBtn').addEventListener('click', function() {
-        var cfg = collectConfig();
-        saveConfig(cfg);
-        showToast('Конфигурация сохранена. Изменения применятся на главной странице.');
-      });
-
-      document.getElementById('resetBtn').addEventListener('click', function() {
-        if (confirm('Сбросить все настройки до заводских?')) {
-          saveConfig(defaultConfig);
-          renderAdmin();
-          showToast('Настройки сброшены до стандартных.');
+      },
+      sls: {
+        enabled: false, label: 'SLS (Nylon Powder)',
+        materials: {
+          pa12: { enabled: true, label: 'PA12 Nylon', density: 1.01, pricePerGram: 25, timePerGram: 3, colors: ['Белый','Чёрный'] },
+          pa11: { enabled: false, label: 'PA11 Nylon', density: 1.03, pricePerGram: 30, timePerGram: 3, colors: ['Белый'] },
+          tpu_sls: { enabled: false, label: 'TPU (SLS)', density: 1.2, pricePerGram: 35, timePerGram: 3, colors: ['Чёрный'] }
         }
-      });
+      }
+    },
+    quality: {
+      '0.12': { label: '0.12 mm — High', priceMultiplier: 1.5, timeMultiplier: 1.6 },
+      '0.2':  { label: '0.20 mm — Standard', priceMultiplier: 1.0, timeMultiplier: 1.0 },
+      '0.28': { label: '0.28 mm — Draft', priceMultiplier: 0.8, timeMultiplier: 0.7 }
+    },
+    infill: {
+      '15':  { label: '15% — Light', priceMultiplier: 0.85, timeMultiplier: 0.9 },
+      '50':  { label: '50% — Standard', priceMultiplier: 1.0, timeMultiplier: 1.0 },
+      '100': { label: '100% — Solid', priceMultiplier: 1.3, timeMultiplier: 1.4 }
+    },
+    postProcessing: { fdm: 200, sla: 300 },
+    minPrice: 500,
+    minTime: 30
+  };
+}
 
-      document.getElementById('exportBtn').addEventListener('click', function() {
-        var cfg = collectConfig();
-        var text = JSON.stringify(cfg, null, 2);
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).then(function() {
-            showToast('JSON скопирован в буфер обмена.');
-          })['catch'](function() {
-            fallbackCopy(text);
-          });
-        } else {
-          fallbackCopy(text);
-        }
-      });
-    }
+// ===== STORAGE HELPERS =====
+function saveExecutors(list) {
+  localStorage.setItem('3dpc_executors', JSON.stringify(list));
+}
 
-    function fallbackCopy(text) {
-      var ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.position = 'fixed';
-      ta.style.left = '-9999px';
-      document.body.appendChild(ta);
-      ta.select();
-      try { document.execCommand('copy'); showToast('JSON скопирован в буфер обмена.'); }
-      catch (e) { showToast('Не удалось скопировать. Выделите и скопируйте вручную.'); }
-      document.body.removeChild(ta);
-    }
+function loadExecutors() {
+  try { var d = localStorage.getItem('3dpc_executors'); if (d) return JSON.parse(d); } catch(e) {}
+  return {};
+}
 
-    // ================================================================
-    //  РЕНДЕРИНГ ФОРМЫ ВХОДА
-    // ================================================================
-    function renderLogin(error) {
-      var html = '';
-      html += '<div class="login-box">';
-      html += '<h1 style="margin-bottom:16px;">Вход в панель</h1>';
-      html += '<p class="desc" style="margin-bottom:20px;">Введите имя и пароль из адресной строки.</p>';
-      html += '<p class="desc" style="font-size:0.8rem;color:var(--text-muted);">Пример: admin.html?name=admin&password=admin123</p>';
-      html += '<div style="margin-top:16px;">';
-      html += '<div class="field"><label>Имя</label><input type="text" id="loginName" placeholder="admin"></div>';
-      html += '<div class="field"><label>Пароль</label><input type="password" id="loginPass" placeholder="••••••••"></div>';
-      if (error) html += '<div class="login-error">' + error + '</div>';
-      html += '<button class="btn btn-primary" id="loginBtn" style="width:100%;margin-top:12px;">Войти</button>';
-      html += '</div></div>';
+function saveExecutorConfig(name, cfg) {
+  localStorage.setItem('3dpc_cfg_' + name, JSON.stringify(cfg));
+}
 
-      document.getElementById('app').innerHTML = html;
+function loadExecutorConfig(name) {
+  try { var d = localStorage.getItem('3dpc_cfg_' + name); if (d) return JSON.parse(d); } catch(e) {}
+  return null;
+}
 
-      document.getElementById('loginBtn').addEventListener('click', function() {
-        var name = document.getElementById('loginName').value.trim();
-        var pass = document.getElementById('loginPass').value.trim();
-        if (name === ADMIN_USER && pass === ADMIN_PASS) {
-          // Перенаправляем с параметрами в URL
-          window.location.href = 'admin.html?name=' + encodeURIComponent(name) + '&password=' + encodeURIComponent(pass);
-        } else {
-          renderLogin('Неверное имя или пароль.');
-        }
-      });
-    }
+function saveOwnerContact(c) {
+  localStorage.setItem('3dpc_owner_contact', JSON.stringify(c));
+}
 
-    // ================================================================
-    //  ИНИЦИАЛИЗАЦИЯ
-    // ================================================================
-    if (checkAuth()) {
-      renderAdmin();
+function loadOwnerContact() {
+  try { var d = localStorage.getItem('3dpc_owner_contact'); if (d) return JSON.parse(d); } catch(e) {}
+  return { email: 'danilefeshencko@yandex.ru', telegram: 'https://t.me/danil_0a' };
+}
+
+// ===== AUTH =====
+function getUrlParams() {
+  var p = {}, s = window.location.search.substring(1);
+  if (!s) return p;
+  s.split('&').forEach(function(pair) {
+    var parts = pair.split('=');
+    if (parts.length === 2) p[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1]);
+  });
+  return p;
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  var el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(function() { el.classList.remove('show'); }, 2500);
+}
+
+// ===== BASE64 CONFIG ENCODING =====
+function encodeConfig(cfg) {
+  var json = JSON.stringify(cfg);
+  var bytes = [];
+  for (var i = 0; i < json.length; i++) {
+    var c = json.charCodeAt(i);
+    if (c < 128) bytes.push(c);
+    else if (c < 2048) { bytes.push(192 | (c >> 6)); bytes.push(128 | (c & 63)); }
+    else { bytes.push(224 | (c >> 12)); bytes.push(128 | ((c >> 6) & 63)); bytes.push(128 | (c & 63)); }
+  }
+  var binary = '';
+  for (var j = 0; j < bytes.length; j++) binary += String.fromCharCode(bytes[j]);
+  return btoa(binary);
+}
+
+function decodeConfig(encoded) {
+  var binary = atob(encoded);
+  var bytes = new Uint8Array(binary.length);
+  for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  var json = new TextDecoder('utf-8').decode(bytes);
+  return JSON.parse(json);
+}
+
+function generateExecutorUrl(cfg) {
+  var encoded = encodeConfig(cfg);
+  var base = window.location.origin + window.location.pathname.replace('admin.html','') + 'index.html';
+  return base + '#config=' + encoded;
+}
+
+// ===== RENDER =====
+function render() {
+  var params = getUrlParams();
+  var pname = params.name || '';
+  var ppass = params.password || '';
+
+  if (pname === ADMIN_USER && ppass === ADMIN_PASS) { renderOwner(); return; }
+
+  var executors = loadExecutors();
+  if (executors[pname] && executors[pname] === ppass) { renderExecutor(pname); return; }
+
+  // First login: auto-provision if URL has valid name+password
+  if (pname && ppass && pname !== ADMIN_USER && /^[a-zA-Z0-9_-]+$/.test(pname)) {
+    executors[pname] = ppass;
+    saveExecutors(executors);
+    saveExecutorConfig(pname, defaultExecutorConfig(pname));
+    renderExecutor(pname);
+    return;
+  }
+
+  renderLogin();
+}
+
+function renderLogin(err) {
+  var h = '<div class="login-box"><h1 style="margin-bottom:12px;">3D Print Admin</h1>';
+  h += '<p class="desc" style="margin-bottom:16px;">Введите имя и пароль из адресной строки</p>';
+  h += '<p class="text-muted" style="margin-bottom:16px;">admin.html?name=...&password=...</p>';
+  h += '<div class="field"><label>Имя</label><input type="text" id="loginName"></div>';
+  h += '<div class="field"><label>Пароль</label><input type="password" id="loginPass"></div>';
+  if (err) h += '<div class="login-error">' + err + '</div>';
+  h += '<button class="btn btn-primary" id="loginBtn" style="width:100%;margin-top:12px;">Войти</button></div>';
+  document.getElementById('app').innerHTML = h;
+  document.getElementById('loginBtn').addEventListener('click', function() {
+    var n = document.getElementById('loginName').value.trim();
+    var p = document.getElementById('loginPass').value.trim();
+    if (n === ADMIN_USER && p === ADMIN_PASS) {
+      window.location.href = 'admin.html?name=' + encodeURIComponent(n) + '&password=' + encodeURIComponent(p);
     } else {
-      renderLogin(null);
+      var execs = loadExecutors();
+      if (execs[n] && execs[n] === p) {
+        window.location.href = 'admin.html?name=' + encodeURIComponent(n) + '&password=' + encodeURIComponent(p);
+      } else {
+        renderLogin('Неверное имя или пароль.');
+      }
     }
-  </script>
+  });
+}
+
+// ===== OWNER PANEL =====
+var _currentTab = 'executors';
+
+function renderOwner() {
+  var contact = loadOwnerContact();
+  var executors = loadExecutors();
+
+  var h = '<div class="text-center" style="padding:16px 0 4px;"><h1>Панель управления</h1>';
+  h += '<p class="desc">Управление исполнителями и генерация ссылок</p></div>';
+
+  // Tabs
+  h += '<div class="tabs">';
+  h += '<div class="tab' + (_currentTab === 'executors' ? ' active' : '') + '" data-tab="executors">Исполнители</div>';
+  h += '<div class="tab' + (_currentTab === 'contact' ? ' active' : '') + '" data-tab="contact">Мои контакты</div>';
+  h += '<div class="tab' + (_currentTab === 'about' ? ' active' : '') + '" data-tab="about">О проекте</div>';
+  h += '<a href="index.html" class="tab" style="text-decoration:none;">На главную</a>';
+  h += '</div>';
+
+  // Tab: Executors
+  h += '<div id="tab-executors"' + (_currentTab === 'executors' ? '' : ' class="hidden"') + '>';
+  h += '<div class="card"><div class="card-title">Список исполнителей</div>';
+  var names = Object.keys(executors);
+  if (names.length === 0) h += '<p class="text-muted">Нет исполнителей. Создайте первого.</p>';
+  names.forEach(function(n) {
+    var cfg = loadExecutorConfig(n);
+    var lbl = cfg && cfg.executor && cfg.executor.name ? cfg.executor.name : n;
+    h += '<div class="executor-row"><span class="name">' + escHtml(lbl) + ' <span class="text-muted">(' + escHtml(n) + ')</span></span>';
+    var loginUrl = window.location.origin + window.location.pathname + '?name=' + encodeURIComponent(n) + '&password=' + encodeURIComponent(executors[n]);
+    h += '<div class="actions">';
+    h += '<button class="btn btn-sm btn-outline" data-edit="' + escHtml(n) + '">Настроить</button>';
+    h += '<button class="btn btn-sm btn-outline" data-link="' + escHtml(n) + '">Ссылка клиенту</button>';
+    h += '<button class="btn btn-sm btn-outline" data-adminlink="' + escHtml(loginUrl) + '" title="Ссылка для входа исполнителя">Логин</button>';
+    h += '<button class="btn btn-sm btn-danger" data-del="' + escHtml(n) + '">X</button>';
+    h += '</div></div>';
+  });
+  h += '<div class="flex" style="margin-top:12px;">';
+  h += '<input type="text" id="newExecName" placeholder="ID исполнителя (лат.)" style="padding:8px 10px;font-size:.85rem;border:1px solid var(--border);border-radius:var(--radius-sm);outline:none;flex:1;">';
+  h += '<input type="password" id="newExecPass" placeholder="Пароль" style="padding:8px 10px;font-size:.85rem;border:1px solid var(--border);border-radius:var(--radius-sm);outline:none;width:140px;">';
+  h += '<button class="btn btn-primary btn-sm" id="addExecBtn">+ Добавить</button>';
+  h += '</div></div>';
+
+  // Executor config editor (shown when editing)
+  h += '<div id="execEditor" class="hidden"></div>';
+  h += '</div>'; // end tab-executors
+
+  // Tab: Contact
+  h += '<div id="tab-contact"' + (_currentTab === 'contact' ? '' : ' class="hidden"') + '>';
+  h += '<div class="card"><div class="card-title">Мои контактные данные</div>';
+  h += '<p class="text-muted" style="margin-bottom:12px;">Эти данные отображаются на странице заказа и в сгенерированном файле.</p>';
+  h += '<div class="contact-line"><label>Email</label><input type="email" id="ownerEmail" value="' + escHtml(contact.email) + '"></div>';
+  h += '<div class="contact-line"><label>Telegram</label><input type="text" id="ownerTelegram" value="' + escHtml(contact.telegram) + '"></div>';
+  h += '<button class="btn btn-primary btn-sm" id="saveOwnerContact">Сохранить контакты</button>';
+  h += '</div></div>';
+
+  // Tab: About
+  h += '<div id="tab-about"' + (_currentTab === 'about' ? '' : ' class="hidden"') + '>';
+  h += '<div class="card"><div class="card-title">О проекте</div>';
+  h += '<p>3D Print Calculator — инструмент для расчёта стоимости 3D-печати.</p>';
+  h += '<p class="text-muted mt-8">Разработчик: Данила<br>Почта: danilefeshencko@yandex.ru<br>Telegram: https://t.me/danil_0a</p>';
+  h += '</div></div>';
+
+  document.getElementById('app').innerHTML = h;
+  bindOwnerEvents();
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function bindOwnerEvents() {
+  // Tabs
+  document.querySelectorAll('.tab[data-tab]').forEach(function(el) {
+    el.addEventListener('click', function() {
+      _currentTab = this.getAttribute('data-tab');
+      renderOwner();
+    });
+  });
+
+  // Save contact
+  var saveContactBtn = document.getElementById('saveOwnerContact');
+  if (saveContactBtn) {
+    saveContactBtn.addEventListener('click', function() {
+      saveOwnerContact({
+        email: document.getElementById('ownerEmail').value.trim(),
+        telegram: document.getElementById('ownerTelegram').value.trim()
+      });
+      showToast('Контакты сохранены.');
+    });
+  }
+
+  // Add executor
+  var addBtn = document.getElementById('addExecBtn');
+  if (addBtn) {
+    addBtn.addEventListener('click', function() {
+      var name = document.getElementById('newExecName').value.trim();
+      var pass = document.getElementById('newExecPass').value.trim();
+      if (!name || !pass) { showToast('Заполните ID и пароль.'); return; }
+      if (!/^[a-zA-Z0-9_-]+$/.test(name)) { showToast('ID только латиница, цифры, -, _'); return; }
+      var execs = loadExecutors();
+      if (execs[name]) { showToast('Исполнитель с таким ID уже существует.'); return; }
+      execs[name] = pass;
+      saveExecutors(execs);
+      // Create default config
+      var cfg = defaultExecutorConfig(name);
+      saveExecutorConfig(name, cfg);
+      showToast('Исполнитель ' + name + ' создан.');
+      renderOwner();
+    });
+  }
+
+  // Delete executor
+  document.querySelectorAll('[data-del]').forEach(function(el) {
+    el.addEventListener('click', function() {
+      var name = this.getAttribute('data-del');
+      if (!confirm('Удалить исполнителя "' + name + '"?')) return;
+      var execs = loadExecutors();
+      delete execs[name];
+      saveExecutors(execs);
+      localStorage.removeItem('3dpc_cfg_' + name);
+      showToast('Исполнитель ' + name + ' удалён.');
+      renderOwner();
+    });
+  });
+
+  // Edit executor
+  document.querySelectorAll('[data-edit]').forEach(function(el) {
+    el.addEventListener('click', function() {
+      var name = this.getAttribute('data-edit');
+      renderExecutorEditor(name);
+    });
+  });
+
+  // Link generator (client link)
+  document.querySelectorAll('[data-link]').forEach(function(el) {
+    el.addEventListener('click', function() {
+      var name = this.getAttribute('data-link');
+      var cfg = loadExecutorConfig(name);
+      if (!cfg) { showToast('Конфиг не найден.'); return; }
+      var url = generateExecutorUrl(cfg);
+      showLinkDialog(url, name);
+    });
+  });
+
+  // Admin login link for executor
+  document.querySelectorAll('[data-adminlink]').forEach(function(el) {
+    el.addEventListener('click', function() {
+      var url = this.getAttribute('data-adminlink');
+      var inp = document.createElement('input');
+      inp.value = url;
+      document.body.appendChild(inp);
+      inp.select();
+      try { document.execCommand('copy'); showToast('Ссылка для входа скопирована.'); } catch(e) { showToast('Ошибка.'); }
+      document.body.removeChild(inp);
+    });
+  });
+}
+
+// ===== LINK DIALOG =====
+function showLinkDialog(url, name) {
+  var h = '<div class="card"><div class="card-title">Ссылка для ' + escHtml(name) + '</div>';
+  h += '<div class="url-box"><input type="text" id="genUrl" value="' + escHtml(url) + '" readonly>';
+  h += '<button class="btn btn-primary btn-sm" id="copyUrlBtn">Копировать</button></div>';
+  h += '<div class="qr-box"><img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(url) + '" alt="QR"></div>';
+  h += '<p class="text-muted text-center mt-8">QR-код генерируется автоматически. Сохраните его как картинку.</p>';
+  h += '</div>';
+
+  var editor = document.getElementById('execEditor');
+  editor.innerHTML = h;
+  editor.classList.remove('hidden');
+
+  document.getElementById('copyUrlBtn').addEventListener('click', function() {
+    var inp = document.getElementById('genUrl');
+    inp.select();
+    try { document.execCommand('copy'); showToast('Ссылка скопирована.'); } catch(e) { showToast('Ошибка копирования.'); }
+  });
+}
+
+// ===== EXECUTOR EDITOR =====
+function renderExecutorEditor(name) {
+  var cfg = loadExecutorConfig(name);
+  if (!cfg) { showToast('Конфиг не найден.'); return; }
+
+  var h = '<div class="card"><div class="card-title">Настройка: ' + escHtml(cfg.executor && cfg.executor.name ? cfg.executor.name : name) + '</div>';
+
+  // Executor info
+  h += '<h2>Информация об исполнителе</h2>';
+  h += '<div class="flex mb-8"><label style="font-size:.82rem;min-width:80px;">Название:</label>';
+  h += '<input type="text" id="execName" value="' + escHtml(cfg.executor.name) + '" style="flex:1;padding:6px 8px;font-size:.85rem;border:1px solid var(--border);border-radius:4px;"></div>';
+  h += '<div class="flex mb-8"><label style="font-size:.82rem;min-width:80px;">Email:</label>';
+  h += '<input type="text" id="execEmail" value="' + escHtml(cfg.executor.email) + '" style="flex:1;padding:6px 8px;font-size:.85rem;border:1px solid var(--border);border-radius:4px;"></div>';
+  h += '<div class="flex mb-8"><label style="font-size:.82rem;min-width:80px;">Telegram:</label>';
+  h += '<input type="text" id="execTelegram" value="' + escHtml(cfg.executor.telegram) + '" style="flex:1;padding:6px 8px;font-size:.85rem;border:1px solid var(--border);border-radius:4px;"></div>';
+  h += '<div class="flex mb-8"><label style="font-size:.82rem;min-width:80px;">Телефон:</label>';
+  h += '<input type="text" id="execPhone" value="' + escHtml(cfg.executor.phone) + '" style="flex:1;padding:6px 8px;font-size:.85rem;border:1px solid var(--border);border-radius:4px;"></div>';
+
+  // Technologies
+  var techKeys = Object.keys(cfg.technologies);
+  techKeys.forEach(function(tk) {
+    var tech = cfg.technologies[tk];
+    h += '<div class="card" style="margin-top:12px;padding:14px;">';
+    h += '<div class="flex" style="margin-bottom:8px;"><label style="font-weight:600;">' + escHtml(tech.label) + '</label>';
+    h += '<label style="margin-left:12px;font-size:.85rem;"><input type="checkbox" id="tech-' + tk + '"' + (tech.enabled ? ' checked' : '') + '> Включена</label></div>';
+
+    var matKeys = Object.keys(tech.materials);
+    h += '<table class="config-table"><tr><th>Материал</th><th>Вкл</th><th>Плотность</th><th>Цена/г</th><th>Мин/г</th><th>Цвета</th></tr>';
+    matKeys.forEach(function(mk) {
+      var m = tech.materials[mk];
+      h += '<tr><td class="key-col">' + escHtml(m.label) + '</td>';
+      h += '<td><input type="checkbox" id="mat-' + tk + '-' + mk + '"' + (m.enabled ? ' checked' : '') + '></td>';
+      h += '<td><input type="number" step="0.01" id="den-' + tk + '-' + mk + '" value="' + m.density + '" style="width:70px;"></td>';
+      h += '<td><input type="number" step="0.5" id="pri-' + tk + '-' + mk + '" value="' + m.pricePerGram + '" style="width:70px;"></td>';
+      h += '<td><input type="number" step="0.5" id="tim-' + tk + '-' + mk + '" value="' + m.timePerGram + '" style="width:70px;"></td>';
+      h += '<td><input type="text" id="col-' + tk + '-' + mk + '" value="' + escHtml(m.colors.join(', ')) + '" style="min-width:120px;"></td>';
+      h += '</tr>';
+    });
+    h += '</table></div>';
+  });
+
+  // Quality
+  h += '<div class="card" style="margin-top:12px;padding:14px;">';
+  h += '<h2>Высота слоя — множители</h2>';
+  h += '<table class="config-table"><tr><th>Слой</th><th>Множитель цены</th><th>Множитель времени</th></tr>';
+  var qKeys = Object.keys(cfg.quality);
+  qKeys.forEach(function(qk) {
+    var qv = cfg.quality[qk];
+    h += '<tr><td class="key-col">' + escHtml(qv.label) + '</td>';
+    h += '<td><input type="number" step="0.05" id="qual-' + qk + '-p" value="' + qv.priceMultiplier + '" style="width:80px;"></td>';
+    h += '<td><input type="number" step="0.05" id="qual-' + qk + '-t" value="' + qv.timeMultiplier + '" style="width:80px;"></td></tr>';
+  });
+  h += '</table></div>';
+
+  // Infill
+  h += '<div class="card" style="margin-top:12px;padding:14px;">';
+  h += '<h2>Заполнение — множители</h2>';
+  h += '<table class="config-table"><tr><th>Заполнение</th><th>Множитель цены</th><th>Множитель времени</th></tr>';
+  var iKeys = Object.keys(cfg.infill);
+  iKeys.forEach(function(ik) {
+    var iv = cfg.infill[ik];
+    h += '<tr><td class="key-col">' + escHtml(iv.label) + '</td>';
+    h += '<td><input type="number" step="0.05" id="inf-' + ik + '-p" value="' + iv.priceMultiplier + '" style="width:80px;"></td>';
+    h += '<td><input type="number" step="0.05" id="inf-' + ik + '-t" value="' + iv.timeMultiplier + '" style="width:80px;"></td></tr>';
+  });
+  h += '</table></div>';
+
+  // Post-processing & minimums
+  h += '<div class="card" style="margin-top:12px;padding:14px;">';
+  h += '<h2>Постобработка и минимумы</h2>';
+  h += '<table class="config-table">';
+  h += '<tr><td class="key-col">Постобработка FDM (руб)</td><td><input type="number" step="10" id="post-fdm" value="' + cfg.postProcessing.fdm + '" style="width:100px;"></td></tr>';
+  h += '<tr><td class="key-col">Постобработка SLA (руб)</td><td><input type="number" step="10" id="post-sla" value="' + cfg.postProcessing.sla + '" style="width:100px;"></td></tr>';
+  h += '<tr><td class="key-col">Мин. цена (руб)</td><td><input type="number" step="50" id="minPrice" value="' + cfg.minPrice + '" style="width:100px;"></td></tr>';
+  h += '<tr><td class="key-col">Мин. время (мин)</td><td><input type="number" step="5" id="minTime" value="' + cfg.minTime + '" style="width:100px;"></td></tr>';
+  h += '</table></div>';
+
+  // Buttons
+  h += '<div class="btn-group">';
+  h += '<button class="btn btn-primary" id="saveExecCfg">Сохранить</button>';
+  h += '<button class="btn btn-success" id="genExecLink">Сгенерировать ссылку</button>';
+  h += '<button class="btn btn-outline" id="cancelEdit">Назад</button>';
+  h += '</div></div>';
+
+  var editor = document.getElementById('execEditor');
+  editor.innerHTML = h;
+  editor.classList.remove('hidden');
+  editor.scrollIntoView({ behavior: 'smooth' });
+
+  // Events
+  // Save
+  document.getElementById('saveExecCfg').addEventListener('click', function() { saveExecEditor(name); });
+  // Generate link
+  document.getElementById('genExecLink').addEventListener('click', function() {
+    saveExecEditor(name, function() {
+      var cfg2 = loadExecutorConfig(name);
+      if (!cfg2) return;
+      var url = generateExecutorUrl(cfg2);
+      showLinkDialog(url, name);
+    });
+  });
+  // Cancel
+  document.getElementById('cancelEdit').addEventListener('click', function() {
+    editor.classList.add('hidden');
+    editor.innerHTML = '';
+  });
+}
+
+function saveExecEditor(name, cb) {
+  var cfg = loadExecutorConfig(name);
+  if (!cfg) { showToast('Ошибка загрузки конфига.'); return; }
+
+  // Executor info
+  cfg.executor.name = document.getElementById('execName').value.trim() || name;
+  cfg.executor.email = document.getElementById('execEmail').value.trim();
+  cfg.executor.telegram = document.getElementById('execTelegram').value.trim();
+  cfg.executor.phone = document.getElementById('execPhone').value.trim();
+
+  // Technologies
+  var techKeys = Object.keys(cfg.technologies);
+  techKeys.forEach(function(tk) {
+    var tech = cfg.technologies[tk];
+    var techEnabled = document.getElementById('tech-' + tk);
+    if (techEnabled) tech.enabled = techEnabled.checked;
+
+    var matKeys = Object.keys(tech.materials);
+    matKeys.forEach(function(mk) {
+      var m = tech.materials[mk];
+      var matEnabled = document.getElementById('mat-' + tk + '-' + mk);
+      if (!matEnabled) return;
+      m.enabled = matEnabled.checked;
+      var denEl = document.getElementById('den-' + tk + '-' + mk);
+      if (denEl) m.density = parseFloat(denEl.value) || m.density;
+      m.pricePerGram = parseFloat(document.getElementById('pri-' + tk + '-' + mk).value) || m.pricePerGram;
+      m.timePerGram = parseFloat(document.getElementById('tim-' + tk + '-' + mk).value) || m.timePerGram;
+      var colorsStr = document.getElementById('col-' + tk + '-' + mk).value;
+      m.colors = colorsStr.split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s; });
+    });
+  });
+
+  // Quality
+  var qKeys = Object.keys(cfg.quality);
+  qKeys.forEach(function(qk) {
+    cfg.quality[qk].priceMultiplier = parseFloat(document.getElementById('qual-' + qk + '-p').value) || cfg.quality[qk].priceMultiplier;
+    cfg.quality[qk].timeMultiplier = parseFloat(document.getElementById('qual-' + qk + '-t').value) || cfg.quality[qk].timeMultiplier;
+  });
+
+  // Infill
+  var iKeys = Object.keys(cfg.infill);
+  iKeys.forEach(function(ik) {
+    cfg.infill[ik].priceMultiplier = parseFloat(document.getElementById('inf-' + ik + '-p').value) || cfg.infill[ik].priceMultiplier;
+    cfg.infill[ik].timeMultiplier = parseFloat(document.getElementById('inf-' + ik + '-t').value) || cfg.infill[ik].timeMultiplier;
+  });
+
+  // Post-processing
+  cfg.postProcessing.fdm = parseFloat(document.getElementById('post-fdm').value) || cfg.postProcessing.fdm;
+  cfg.postProcessing.sla = parseFloat(document.getElementById('post-sla').value) || cfg.postProcessing.sla;
+  cfg.minPrice = parseFloat(document.getElementById('minPrice').value) || cfg.minPrice;
+  cfg.minTime = parseFloat(document.getElementById('minTime').value) || cfg.minTime;
+
+  saveExecutorConfig(name, cfg);
+  showToast('Конфигурация сохранена.');
+  if (cb) cb();
+}
+
+// ===== EXECUTOR PANEL =====
+function renderExecutor(name) {
+  var h = '<div class="text-center" style="padding:16px 0 4px;"><h1>Панель исполнителя</h1>';
+  h += '<p class="desc">Настройте свои цены и получите ссылку для клиентов</p></div>';
+
+  document.getElementById('app').innerHTML = h + '<div id="execSelfEditor"></div>';
+
+  // We reuse the same editor but without the list
+  var editor = document.getElementById('execSelfEditor');
+  var cfg = loadExecutorConfig(name);
+  if (!cfg) {
+    cfg = defaultExecutorConfig(name);
+    saveExecutorConfig(name, cfg);
+  }
+  editor.innerHTML = '<div class="card" id="execEditor"></div>';
+  renderExecutorInlineEditor(name, cfg, document.getElementById('execEditor'));
+}
+
+function renderExecutorInlineEditor(name, cfg, container) {
+  var h = '<div class="card-title">Мои настройки</div>';
+
+  // Info
+  h += '<h2>Информация (показывается клиентам)</h2>';
+  h += '<div class="flex mb-8"><label style="font-size:.82rem;min-width:80px;">Название:</label>';
+  h += '<input type="text" id="execName" value="' + escHtml(cfg.executor.name) + '" style="flex:1;padding:6px 8px;font-size:.85rem;border:1px solid var(--border);border-radius:4px;"></div>';
+  h += '<div class="flex mb-8"><label style="font-size:.82rem;min-width:80px;">Email:</label>';
+  h += '<input type="text" id="execEmail" value="' + escHtml(cfg.executor.email) + '" style="flex:1;padding:6px 8px;font-size:.85rem;border:1px solid var(--border);border-radius:4px;"></div>';
+  h += '<div class="flex mb-8"><label style="font-size:.82rem;min-width:80px;">Telegram:</label>';
+  h += '<input type="text" id="execTelegram" value="' + escHtml(cfg.executor.telegram) + '" style="flex:1;padding:6px 8px;font-size:.85rem;border:1px solid var(--border);border-radius:4px;"></div>';
+  h += '<div class="flex mb-8"><label style="font-size:.82rem;min-width:80px;">Телефон:</label>';
+  h += '<input type="text" id="execPhone" value="' + escHtml(cfg.executor.phone) + '" style="flex:1;padding:6px 8px;font-size:.85rem;border:1px solid var(--border);border-radius:4px;"></div>';
+
+  // Technologies
+  var techKeys = Object.keys(cfg.technologies);
+  techKeys.forEach(function(tk) {
+    var tech = cfg.technologies[tk];
+    h += '<div class="card" style="margin-top:12px;padding:14px;">';
+    h += '<div class="flex" style="margin-bottom:8px;"><label style="font-weight:600;">' + escHtml(tech.label) + '</label>';
+    h += '<label style="margin-left:12px;font-size:.85rem;"><input type="checkbox" id="tech-' + tk + '"' + (tech.enabled ? ' checked' : '') + '> Включена</label></div>';
+
+    var matKeys = Object.keys(tech.materials);
+    h += '<table class="config-table"><tr><th>Материал</th><th>Вкл</th><th>Цена/г</th><th>Мин/г</th><th>Цвета</th></tr>';
+    matKeys.forEach(function(mk) {
+      var m = tech.materials[mk];
+      h += '<tr><td class="key-col">' + escHtml(m.label) + '</td>';
+      h += '<td><input type="checkbox" id="mat-' + tk + '-' + mk + '"' + (m.enabled ? ' checked' : '') + '></td>';
+      h += '<td><input type="number" step="0.5" id="pri-' + tk + '-' + mk + '" value="' + m.pricePerGram + '" style="width:70px;"></td>';
+      h += '<td><input type="number" step="0.5" id="tim-' + tk + '-' + mk + '" value="' + m.timePerGram + '" style="width:70px;"></td>';
+      h += '<td><input type="text" id="col-' + tk + '-' + mk + '" value="' + escHtml(m.colors.join(', ')) + '" style="min-width:100px;"></td>';
+      h += '</tr>';
+    });
+    h += '</table></div>';
+  });
+
+  // Quality
+  h += '<div class="card" style="margin-top:12px;padding:14px;">';
+  h += '<h2>Высота слоя</h2>';
+  h += '<table class="config-table"><tr><th>Слой</th><th>Множитель цены</th><th>Множитель времени</th></tr>';
+  var qKeys = Object.keys(cfg.quality);
+  qKeys.forEach(function(qk) {
+    var qv = cfg.quality[qk];
+    h += '<tr><td class="key-col">' + escHtml(qv.label) + '</td>';
+    h += '<td><input type="number" step="0.05" id="qual-' + qk + '-p" value="' + qv.priceMultiplier + '" style="width:80px;"></td>';
+    h += '<td><input type="number" step="0.05" id="qual-' + qk + '-t" value="' + qv.timeMultiplier + '" style="width:80px;"></td></tr>';
+  });
+  h += '</table></div>';
+
+  // Infill
+  h += '<div class="card" style="margin-top:12px;padding:14px;">';
+  h += '<h2>Заполнение</h2>';
+  h += '<table class="config-table"><tr><th>Заполнение</th><th>Множитель цены</th><th>Множитель времени</th></tr>';
+  var iKeys = Object.keys(cfg.infill);
+  iKeys.forEach(function(ik) {
+    var iv = cfg.infill[ik];
+    h += '<tr><td class="key-col">' + escHtml(iv.label) + '</td>';
+    h += '<td><input type="number" step="0.05" id="inf-' + ik + '-p" value="' + iv.priceMultiplier + '" style="width:80px;"></td>';
+    h += '<td><input type="number" step="0.05" id="inf-' + ik + '-t" value="' + iv.timeMultiplier + '" style="width:80px;"></td></tr>';
+  });
+  h += '</table></div>';
+
+  // Post-processing
+  h += '<div class="card" style="margin-top:12px;padding:14px;">';
+  h += '<h2>Постобработка и минимумы</h2>';
+  h += '<table class="config-table">';
+  h += '<tr><td class="key-col">Постобработка FDM (руб)</td><td><input type="number" step="10" id="post-fdm" value="' + cfg.postProcessing.fdm + '" style="width:100px;"></td></tr>';
+  h += '<tr><td class="key-col">Постобработка SLA (руб)</td><td><input type="number" step="10" id="post-sla" value="' + cfg.postProcessing.sla + '" style="width:100px;"></td></tr>';
+  h += '<tr><td class="key-col">Мин. цена (руб)</td><td><input type="number" step="50" id="minPrice" value="' + cfg.minPrice + '" style="width:100px;"></td></tr>';
+  h += '<tr><td class="key-col">Мин. время (мин)</td><td><input type="number" step="5" id="minTime" value="' + cfg.minTime + '" style="width:100px;"></td></tr>';
+  h += '</table></div>';
+
+  h += '<div class="btn-group">';
+  h += '<button class="btn btn-primary" id="execSaveBtn">Сохранить</button>';
+  h += '<button class="btn btn-success" id="execLinkBtn">Сгенерировать ссылку</button>';
+  h += '</div>';
+  h += '<div id="execLinkResult" class="hidden" style="margin-top:12px;"></div>';
+
+  container.innerHTML = h;
+
+  document.getElementById('execSaveBtn').addEventListener('click', function() {
+    saveExecutorEditor(name, function() {
+      showToast('Сохранено.');
+    });
+  });
+
+  document.getElementById('execLinkBtn').addEventListener('click', function() {
+    // Save first
+    saveExecEditor(name, function() {
+      var cfg2 = loadExecutorConfig(name);
+      if (!cfg2) return;
+      var url = generateExecutorUrl(cfg2);
+      var resultDiv = document.getElementById('execLinkResult');
+      var owner = loadOwnerContact();
+      resultDiv.innerHTML = '';
+      resultDiv.classList.remove('hidden');
+      resultDiv.innerHTML = '<div class="card"><div class="card-title">Ваша ссылка для клиентов</div>';
+      resultDiv.innerHTML += '<div class="url-box"><input type="text" id="execGenUrl" value="' + escHtml(url) + '" readonly>';
+      resultDiv.innerHTML += '<button class="btn btn-primary btn-sm" id="execCopyUrl">Копировать</button></div>';
+      resultDiv.innerHTML += '<div class="qr-box"><img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(url) + '" alt="QR"></div>';
+      resultDiv.innerHTML += '<p class="text-muted text-center mt-8">По всем вопросам: ' + escHtml(owner.email) + ' | ' + escHtml(owner.telegram) + '</p>';
+      resultDiv.innerHTML += '</div>';
+
+      document.getElementById('execCopyUrl').addEventListener('click', function() {
+        var inp = document.getElementById('execGenUrl');
+        inp.select();
+        try { document.execCommand('copy'); showToast('Ссылка скопирована.'); } catch(e) { showToast('Ошибка.'); }
+      });
+    });
+  });
+}
+
+// ===== INIT =====
+render();
+</script>
 </body>
 </html>
