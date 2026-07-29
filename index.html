@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Печать — Калькулятор заказа</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #ffffff;
+      --bg-card: #f6f8fa;
+      --bg-input: #ffffff;
+      --text: #1a1a1a;
+      --text-secondary: #6b7280;
+      --text-muted: #9ca3af;
+      --border: #e0e4e8;
+      --accent: #000000;
+      --accent-hover: #333333;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06);
+      --font: -apple-system, 'Segoe UI', system-ui, sans-serif;
+    }
+    html { font-size: 16px; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 24px 16px 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .container { max-width: 720px; width: 100%; }
+
+    /* --- Шапка --- */
+    header { text-align: center; padding: 24px 0 8px; }
+    header h1 { font-size: 1.65rem; font-weight: 700; letter-spacing: -0.02em; }
+    header p { margin-top: 4px; font-size: 0.92rem; color: var(--text-secondary); }
+
+    /* --- Плашка-предупреждение --- */
+    .notice {
+      background: #fff8e6;
+      border: 1px solid #f0d78a;
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      margin: 16px 0;
+      font-size: 0.85rem;
+      color: #8a6d1b;
+      text-align: center;
+    }
+
+    /* --- Инфо-блок --- */
+    .info {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin: 16px 0 20px;
+      display: grid;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    .info strong { color: var(--text); }
+
+    /* --- Карточка --- */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 20px;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    /* --- Строка параметра (поле + фото) --- */
+    .param-row {
+      display: grid;
+      grid-template-columns: 1fr 130px;
+      gap: 16px;
+      margin-bottom: 22px;
+      align-items: start;
+    }
+    .param-row:last-child { margin-bottom: 0; }
+    .param-fields { min-width: 0; }
+
+    /* --- Фото-слот --- */
+    .photo-slot {
+      width: 130px;
+      height: 130px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .photo-slot img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .photo-slot .placeholder {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 8px;
+      line-height: 1.3;
+    }
+
+    /* --- Поля формы --- */
+    .field { margin-bottom: 10px; }
+    .field:last-child { margin-bottom: 0; }
+    .field.label-top {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .field label,
+    .field .label-text {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .field .hint {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+      line-height: 1.4;
+    }
+    .field input[type="number"],
+    .field input[type="text"],
+    .field select,
+    .field textarea {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 0.95rem;
+      font-family: var(--font);
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus { border-color: #000; }
+    .field input[type="number"] { -moz-appearance: textfield; }
+    .field input[type="number"]::-webkit-inner-spin-button,
+    .field input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none; margin: 0;
+    }
+    .field textarea { resize: vertical; min-height: 64px; }
+    .field select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' fill='%236b7280'%3E%3Cpath d='M1 1l4.5 5L10 1'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 30px;
+    }
+
+    /* --- Габариты (ширина x глубина x высота) --- */
+    .dims-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+    .dims-row .field label { font-size: 0.75rem; }
+    .calc-weight {
+      margin-top: 8px;
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+    }
+    .calc-weight strong { color: var(--text); }
+
+    /* --- Радио-кнопки --- */
+    .radio-group {
+      display: flex;
+      gap: 10px;
+    }
+    .radio-group .radio-item {
+      flex: 1;
+    }
+    .radio-group input[type="radio"] { display: none; }
+    .radio-group .radio-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 12px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--text-secondary);
+      user-select: none;
+    }
+    .radio-group input[type="radio"]:checked + .radio-label {
+      border-color: #000;
+      color: #000;
+      background: #f0f0f0;
+    }
+    .radio-group .radio-label:hover { border-color: #888; }
+
+    /* --- Чекбокс --- */
+    .checkbox-field {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      user-select: none;
+      color: var(--text);
+    }
+    .checkbox-field input[type="checkbox"] { display: none; }
+    .checkbox-field .checkmark {
+      width: 20px; height: 20px;
+      flex-shrink: 0;
+      border: 2px solid var(--border);
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .checkbox-field input:checked + .checkmark {
+      background: #000;
+      border-color: #000;
+    }
+    .checkbox-field input:checked + .checkmark::after {
+      content: "";
+      width: 6px; height: 10px;
+      border: solid #fff;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+      margin-top: -2px;
+    }
+    .checkbox-field .hint {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-left: 30px;
+      margin-top: 2px;
+    }
+
+    /* --- Результаты --- */
+    .results {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 0;
+    }
+    .result-item {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 14px;
+      text-align: center;
+    }
+    .result-item .label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+    .result-item .value {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    .result-item .value.price { color: #000; }
+    .result-item .value.time { color: #2563eb; }
+
+    /* --- Кнопка --- */
+    .btn {
+      width: 100%;
+      padding: 14px;
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: var(--font);
+      background: #000;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      margin-top: 20px;
+    }
+    .btn:hover { background: #333; }
+    .btn:active { transform: scale(0.98); }
+
+    /* --- Футер --- */
+    footer {
+      margin-top: 32px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    /* --- Адаптив --- */
+    @media (max-width: 640px) {
+      body { padding: 16px 10px 32px; }
+      header h1 { font-size: 1.35rem; }
+      .card { padding: 18px 14px; }
+      .results { grid-template-columns: 1fr; }
+      .radio-group { flex-direction: column; }
+      .dims-row { grid-template-columns: 1fr; }
+      .param-row {
+        grid-template-columns: 1fr;
+      }
+      .photo-slot {
+        width: 100%;
+        height: 180px;
+        order: -1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- ===== ШАПКА ===== -->
+    <header>
+      <h1>3D Print Calculator</h1>
+      <p>Рассчитайте стоимость и сформируйте заказ на 3D-печать</p>
+    </header>
+
+    <!-- ===== ПЛАШКА О ПРИМЕРНЫХ ЦЕНАХ ===== -->
+    <div class="notice">
+      Указанные цены и время печати являются предварительными.
+      Точная стоимость рассчитывается после анализа модели.
+    </div>
+
+    <!-- ===== ИНФОРМАЦИОННЫЙ БЛОК ===== -->
+    <div class="info">
+      <div><strong>FDM</strong> &mdash; послойное наплавление пластиковой нитью. Прочные детали по доступной цене. Подходит для прототипов, функциональных и декоративных изделий.</div>
+      <div><strong>SLA</strong> &mdash; фотополимерная печать жидкой смолой. Максимальная детализация, гладкая поверхность. Для миниатюр, ювелирки и пресс-форм.</div>
+      <div><strong>Материалы:</strong> PLA (универсальный), PETG (ударопрочный), ABS (термостойкий), Смола (высокое качество). Выбирайте под свою задачу.</div>
+    </div>
+
+    <!-- ===== КАЛЬКУЛЯТОР ===== -->
+    <div class="card">
+      <div class="card-title">Параметры заказа</div>
+
+      <!-- ===== ГАБАРИТЫ ===== -->
+      <div class="param-row">
+        <div class="param-fields">
+          <div class="field label-top">
+            <span class="label-text">Габариты модели (мм)</span>
+            <div class="dims-row">
+              <div class="field">
+                <label for="dimW">Ширина</label>
+                <input type="number" id="dimW" min="1" step="1" value="50">
+              </div>
+              <div class="field">
+                <label for="dimD">Глубина</label>
+                <input type="number" id="dimD" min="1" step="1" value="50">
+              </div>
+              <div class="field">
+                <label for="dimH">Высота</label>
+                <input type="number" id="dimH" min="1" step="1" value="50">
+              </div>
+            </div>
+            <div class="calc-weight" id="weightDisplay">Вес модели: &mdash;</div>
+            <div class="hint" style="margin-top:4px;font-size:0.8rem;color:var(--text-muted);">
+              Укажите примерные габариты модели. Вес рассчитывается автоматически исходя из выбранного материала.
+            </div>
+          </div>
+        </div>
+        <div class="photo-slot">
+          <img id="photoDimensions" src="images/dimensions.jpg" alt="Габариты">
+          <div class="placeholder" style="display:none;">Нет фото</div>
+        </div>
+      </div>
+
+      <!-- ===== ТЕХНОЛОГИЯ ===== -->
+      <div class="param-row">
+        <div class="param-fields">
+          <div class="field">
+            <label class="label-text">Технология печати</label>
+            <div class="radio-group" style="margin-top:4px;">
+              <div class="radio-item">
+                <input type="radio" name="tech" id="techFdm" value="fdm" checked>
+                <label class="radio-label" for="techFdm">FDM</label>
+              </div>
+              <div class="radio-item">
+                <input type="radio" name="tech" id="techSla" value="sla">
+                <label class="radio-label" for="techSla">SLA</label>
+              </div>
+            </div>
+            <div class="hint" id="techHint">
+              FDM &mdash; доступная печать пластиковой нитью. SLA &mdash; высокая детализация смолой.
+            </div>
+          </div>
+        </div>
+        <div class="photo-slot">
+          <img id="photoTech" src="images/fdm.jpg" alt="Технология">
+          <div class="placeholder" style="display:none;">Нет фото</div>
+        </div>
+      </div>
+
+      <!-- ===== МАТЕРИАЛ ===== -->
+      <div class="param-row">
+        <div class="param-fields">
+          <div class="field label-top">
+            <label for="materialSelect">Материал</label>
+            <select id="materialSelect"></select>
+            <div class="hint" id="materialHint">
+              Выберите материал. От него зависит прочность, внешний вид и цена детали.
+            </div>
+          </div>
+        </div>
+        <div class="photo-slot">
+          <img id="photoMaterial" src="images/pla.jpg" alt="Материал">
+          <div class="placeholder" style="display:none;">Нет фото</div>
+        </div>
+      </div>
+
+      <!-- ===== ВЫСОТА СЛОЯ ===== -->
+      <div class="field label-top" style="margin-bottom:18px;">
+        <label for="qualitySelect">Высота слоя (качество)</label>
+        <select id="qualitySelect">
+          <option value="0.12">0.12 мм &mdash; высокое качество</option>
+          <option value="0.2" selected>0.20 мм &mdash; стандарт</option>
+          <option value="0.28">0.28 мм &mdash; черновик</option>
+        </select>
+        <div class="hint">
+          Чем тоньше слой, тем глаже поверхность, но дольше печать. Значительно влияет на цену и время.
+        </div>
+      </div>
+
+      <!-- ===== ЗАПОЛНЕНИЕ ===== -->
+      <div class="field label-top" style="margin-bottom:18px;">
+        <label for="infillSelect">Заполнение</label>
+        <select id="infillSelect">
+          <option value="15">15 % &mdash; экономичное</option>
+          <option value="50" selected>50 % &mdash; стандарт</option>
+          <option value="100">100 % &mdash; монолит</option>
+        </select>
+        <div class="hint">
+          Влияет на прочность и вес детали, а также на расход пластика и время печати.
+        </div>
+      </div>
+
+      <!-- ===== ПОСТОБРАБОТКА ===== -->
+      <div class="field">
+        <label class="checkbox-field">
+          <input type="checkbox" id="postprocessing">
+          <span class="checkmark"></span>
+          Нужна постобработка (снятие поддержек / шлифовка)
+        </label>
+        <div class="hint" style="margin-top:4px;font-size:0.8rem;color:var(--text-muted);">
+          Удаление поддержек, шлифовка поверхности, грунтовка. Улучшает внешний вид, но увеличивает стоимость.
+        </div>
+      </div>
+
+      <!-- ===== КОММЕНТАРИЙ ===== -->
+      <div class="field" style="margin-top:18px;">
+        <label for="commentInput" style="font-size:0.82rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.03em;">Комментарий к заказу</label>
+        <textarea id="commentInput" placeholder="Цвет, размеры, особые пожелания..." style="margin-top:4px;"></textarea>
+      </div>
+    </div>
+
+    <!-- ===== РЕЗУЛЬТАТЫ ===== -->
+    <div class="card">
+      <div class="card-title">Расчёт стоимости</div>
+      <div class="results">
+        <div class="result-item">
+          <div class="label">Цена</div>
+          <div class="value price" id="priceDisplay">&mdash;</div>
+        </div>
+        <div class="result-item">
+          <div class="label">Время печати</div>
+          <div class="value time" id="timeDisplay">&mdash;</div>
+        </div>
+      </div>
+      <button class="btn" id="orderBtn">Сформировать заказ</button>
+    </div>
+
+    <footer>
+      Нажмите &laquo;Сформировать заказ&raquo;, чтобы скачать .txt-файл с параметрами для отправки исполнителю.
+    </footer>
+  </div>
+
+  <script>
+    // ================================================================
+    //  КОНФИГУРАЦИЯ КАЛЬКУЛЯТОРА
+    //  Все цены, коэффициенты и плотности материалов здесь.
+    //  Можно редактировать вручную или через админ-панель (admin.html).
+    // ================================================================
+
+    var pricingConfig = {
+
+      // Доступность технологий и материалов (редактируется в admin.html)
+      availability: {
+        sla: true,
+        materials: {
+          pla: true,
+          petg: true,
+          abs: true,
+          resin: true
+        }
+      },
+
+      // Плотность материалов (г/см3) для расчёта веса из габаритов
+      density: {
+        pla:   1.24,
+        petg:  1.27,
+        abs:   1.04,
+        resin: 1.15
+      },
+
+      // Базовая стоимость за 1 грамм (в рублях) и минут на грамм
+      materials: {
+        fdm: {
+          pla:  { pricePerGram: 5,  timePerGram: 8  },
+          petg: { pricePerGram: 7,  timePerGram: 9  },
+          abs:  { pricePerGram: 8,  timePerGram: 10 }
+        },
+        sla: {
+          resin: { pricePerGram: 15, timePerGram: 5  }
+        }
+      },
+
+      // Множители для высоты слоя
+      quality: {
+        '0.12': { priceMultiplier: 1.5, timeMultiplier: 1.6 },
+        '0.2':  { priceMultiplier: 1.0, timeMultiplier: 1.0 },
+        '0.28': { priceMultiplier: 0.8, timeMultiplier: 0.7 }
+      },
+
+      // Множители для заполнения
+      infill: {
+        '15':  { priceMultiplier: 0.85, timeMultiplier: 0.9 },
+        '50':  { priceMultiplier: 1.0,  timeMultiplier: 1.0 },
+        '100': { priceMultiplier: 1.3,  timeMultiplier: 1.4 }
+      },
+
+      // Доплата за постобработку (руб)
+      postProcessing: {
+        fdm: 200,
+        sla: 300
+      },
+
+      // Минимальные пороги
+      minPrice: 500,
+      minTime:  30
+    };
+
+    // Загружаем кастомный конфиг из localStorage (если есть)
+    (function loadCustomConfig() {
+      try {
+        var saved = localStorage.getItem('pricingConfig');
+        if (saved) {
+          var parsed = JSON.parse(saved);
+          // Глубокое слияние: перезаписываем только те поля, что пришли
+          pricingConfig = deepMerge(pricingConfig, parsed);
+        }
+      } catch (e) { /* используем стандартный конфиг */ }
+    })();
+
+    function deepMerge(base, overrides) {
+      var result = {};
+      for (var key in base) {
+        if (base.hasOwnProperty(key)) {
+          if (typeof base[key] === 'object' && base[key] !== null &&
+              typeof overrides[key] === 'object' && overrides[key] !== null &&
+              !Array.isArray(base[key])) {
+            result[key] = deepMerge(base[key], overrides[key]);
+          } else {
+            result[key] = overrides.hasOwnProperty(key) ? overrides[key] : base[key];
+          }
+        }
+      }
+      return result;
+    }
+
+    // ================================================================
+    //  СПИСОК МАТЕРИАЛОВ ПО ТЕХНОЛОГИЯМ
+    // ================================================================
+
+    var materialOptions = {
+      fdm: [
+        { value: 'pla',  label: 'PLA  — универсальный, прочный, биоразлагаемый' },
+        { value: 'petg', label: 'PETG — ударопрочный, гибкий, химически стойкий' },
+        { value: 'abs',  label: 'ABS  — термостойкий, для технических прототипов' }
+      ],
+      sla: [
+        { value: 'resin', label: 'Смола — высокая детализация, гладкая поверхность' }
+      ]
+    };
+
+    // Справочные подсказки для материалов
+    var materialHints = {
+      pla:   'PLA — самый популярный пластик. Жёсткий, прочный, подходит для декора, прототипов и бытовых изделий.',
+      petg:  'PETG — ударопрочный и слегка гибкий. Устойчив к химии и нагрузкам. Идеален для функциональных деталей.',
+      abs:   'ABS — термостойкий (до 100 C). Подвержен усадке, требует закрытой камеры. Для технических прототипов.',
+      resin: 'Фотополимерная смола. Максимальная детализация, гладкая поверхность. Для миниатюр, ювелирки, пресс-форм.'
+    };
+
+    var techHints = {
+      fdm: 'FDM — послойное наплавление пластиковой нитью. Доступная цена, прочные детали. Оптимален для большинства задач.',
+      sla: 'SLA — фотополимерная печать жидкой смолой. Высокая детализация, гладкая поверхность. Дороже FDM.'
+    };
+
+    // Соответствие параметров именам файлов в папке images/
+    // Положите фото с нужным именем в images/ — и оно подставится автоматически.
+    var photoMap = {
+      tech:     { fdm: 'fdm', sla: 'sla' },
+      material: { pla: 'pla', petg: 'petg', abs: 'abs', resin: 'resin' }
+    };
+
+    // ================================================================
+    //  DOM-ССЫЛКИ
+    // ================================================================
+
+    var $ = function(id) { return document.getElementById(id); };
+
+    var dimW        = $('dimW');
+    var dimD        = $('dimD');
+    var dimH        = $('dimH');
+    var weightDisp  = $('weightDisplay');
+    var techRadios  = document.querySelectorAll('input[name="tech"]');
+    var matSelect   = $('materialSelect');
+    var qualSelect  = $('qualitySelect');
+    var infSelect   = $('infillSelect');
+    var postChk     = $('postprocessing');
+    var commentInp  = $('commentInput');
+    var priceDisp   = $('priceDisplay');
+    var timeDisp    = $('timeDisplay');
+    var orderBtn    = $('orderBtn');
+
+    var photoTech     = $('photoTech');
+    var photoMaterial = $('photoMaterial');
+    var techHintEl    = $('techHint');
+    var materialHintEl = $('materialHint');
+
+    // ================================================================
+    //  ОБНОВЛЕНИЕ МАТЕРИАЛОВ ПРИ СМЕНЕ ТЕХНОЛОГИИ
+    // ================================================================
+
+    function updateMaterials() {
+      var tech = document.querySelector('input[name="tech"]:checked').value;
+      var avail = pricingConfig.availability || { materials: { pla: true, petg: true, abs: true, resin: true } };
+      matSelect.innerHTML = '';
+      materialOptions[tech].forEach(function(mat) {
+        if (!avail.materials[mat.value]) return;
+        var opt = document.createElement('option');
+        opt.value = mat.value;
+        opt.textContent = mat.label;
+        if (mat === materialOptions[tech][0]) opt.selected = true;
+        matSelect.appendChild(opt);
+      });
+    }
+
+    // ================================================================
+    //  ОБНОВЛЕНИЕ ФОТО
+    // ================================================================
+
+    function setPhoto(imgEl, name) {
+      if (!name) {
+        imgEl.style.display = 'none';
+        if (imgEl.nextElementSibling) imgEl.nextElementSibling.style.display = 'flex';
+        return;
+      }
+      var trySrc = function(ext) {
+        imgEl.onerror = function() {
+          if (ext === 'jpg') { trySrc('png'); return; }
+          if (ext === 'png') { trySrc('webp'); return; }
+          imgEl.style.display = 'none';
+          if (imgEl.nextElementSibling) imgEl.nextElementSibling.style.display = 'flex';
+        };
+        imgEl.onload = function() {
+          imgEl.style.display = 'block';
+          if (imgEl.nextElementSibling) imgEl.nextElementSibling.style.display = 'none';
+        };
+        imgEl.src = 'images/' + name + '.' + ext;
+      };
+      trySrc('jpg');
+    }
+
+    function applyAvailability() {
+      var avail = pricingConfig.availability || { sla: true, materials: { pla: true, petg: true, abs: true, resin: true } };
+      var slaItem = document.getElementById('techSla').closest('.radio-item');
+      slaItem.style.display = avail.sla ? '' : 'none';
+      if (!avail.sla && document.querySelector('input[name="tech"]:checked').value === 'sla') {
+        document.getElementById('techFdm').checked = true;
+      }
+      updateMaterials();
+    }
+
+    function updatePhotos() {
+      var tech = document.querySelector('input[name="tech"]:checked').value;
+      var mat  = matSelect.value;
+      setPhoto(photoTech,     photoMap.tech[tech]);
+      setPhoto(photoMaterial, photoMap.material[mat]);
+    }
+
+    // ================================================================
+    //  РАСЧЁТ ВЕСА ИЗ ГАБАРИТОВ
+    // ================================================================
+
+    function calcWeight() {
+      var w = parseFloat(dimW.value) || 0;
+      var d = parseFloat(dimD.value) || 0;
+      var h = parseFloat(dimH.value) || 0;
+      var tech = document.querySelector('input[name="tech"]:checked').value;
+      var mat  = matSelect.value;
+      if (!w || !d || !h || !mat) { weightDisp.textContent = 'Вес модели: --'; return 0; }
+
+      var density = pricingConfig.density[mat] || 1.24;
+      var volumeCm3 = (w * d * h) / 1000;
+      var weight = volumeCm3 * density;
+      weight = Math.max(weight, 1);
+      weightDisp.textContent = 'Вес модели: ' + weight.toFixed(1) + ' г (объём ' + volumeCm3.toFixed(1) + ' см3)';
+      return weight;
+    }
+
+    // ================================================================
+    //  РАСЧЁТ ЦЕНЫ И ВРЕМЕНИ
+    // ================================================================
+
+    function calculate() {
+      var weight = calcWeight();
+      var tech   = document.querySelector('input[name="tech"]:checked').value;
+      var matKey = matSelect.value;
+      var qKey   = qualSelect.value;
+      var iKey   = infSelect.value;
+      var needPost = postChk.checked;
+
+      // Подсказки
+      techHintEl.textContent = techHints[tech] || '';
+      materialHintEl.textContent = materialHints[matKey] || '';
+
+      var matCfg     = pricingConfig.materials[tech][matKey];
+      var qualCfg    = pricingConfig.quality[qKey];
+      var infCfg     = pricingConfig.infill[iKey];
+      var postCost   = pricingConfig.postProcessing[tech];
+
+      if (!matCfg || !qualCfg || !infCfg || !weight) {
+        priceDisp.textContent = '--';
+        timeDisp.textContent  = '--';
+        return;
+      }
+
+      var price = weight * matCfg.pricePerGram
+                * qualCfg.priceMultiplier
+                * infCfg.priceMultiplier;
+      if (needPost) price += postCost;
+      price = Math.max(price, pricingConfig.minPrice);
+
+      var time = weight * matCfg.timePerGram
+               * qualCfg.timeMultiplier
+               * infCfg.timeMultiplier;
+      time = Math.max(time, pricingConfig.minTime);
+
+      priceDisp.textContent = Math.round(price) + ' руб.';
+      timeDisp.textContent  = formatTime(Math.round(time));
+    }
+
+    // ================================================================
+    //  ФОРМАТИРОВАНИЕ ВРЕМЕНИ
+    // ================================================================
+
+    function formatTime(minutes) {
+      if (minutes < 60) return minutes + ' мин.';
+      var h = Math.floor(minutes / 60);
+      var m = minutes % 60;
+      return m > 0 ? h + ' ч. ' + m + ' мин.' : h + ' ч.';
+    }
+
+    // ================================================================
+    //  ГЕНЕРАЦИЯ .TXT-ФАЙЛА
+    // ================================================================
+
+    function generateOrderFile() {
+      var w = parseFloat(dimW.value) || 0;
+      var d = parseFloat(dimD.value) || 0;
+      var h = parseFloat(dimH.value) || 0;
+      var tech   = document.querySelector('input[name="tech"]:checked').value;
+      var techLabel = tech === 'fdm' ? 'FDM' : 'SLA';
+      var matEl  = matSelect.options[matSelect.selectedIndex];
+      var matKey = matSelect.value;
+      var matLabel = matEl ? matEl.textContent : '--';
+      var qEl   = qualSelect.options[qualSelect.selectedIndex];
+      var qLabel  = qEl ? qEl.textContent : '--';
+      var iEl   = infSelect.options[infSelect.selectedIndex];
+      var iLabel  = iEl ? iEl.textContent : '--';
+      var needPost  = postChk.checked;
+      var comment   = commentInp.value.trim() || '--';
+
+      var matCfg    = pricingConfig.materials[tech][matKey];
+      var qualCfg   = pricingConfig.quality[qualSelect.value];
+      var infCfg    = pricingConfig.infill[infSelect.value];
+      var postCost  = pricingConfig.postProcessing[tech];
+
+      var density   = pricingConfig.density[matKey] || 1.24;
+      var volumeCm3 = (w * d * h) / 1000;
+      var weight    = Math.max(volumeCm3 * density, 1);
+
+      var price = weight * matCfg.pricePerGram
+                * qualCfg.priceMultiplier
+                * infCfg.priceMultiplier;
+      if (needPost) price += postCost;
+      price = Math.max(price, pricingConfig.minPrice);
+
+      var time = weight * matCfg.timePerGram
+               * qualCfg.timeMultiplier
+               * infCfg.timeMultiplier;
+      time = Math.max(time, pricingConfig.minTime);
+
+      var lines = [
+        '===================================',
+        '        ЗАКАЗ 3D-ПЕЧАТИ',
+        '===================================',
+        '',
+        'Технология:      ' + techLabel,
+        'Материал:        ' + matLabel,
+        'Габариты (мм):   ' + w + ' x ' + d + ' x ' + h,
+        'Вес модели:      ' + weight.toFixed(1) + ' г',
+        'Высота слоя:     ' + qLabel,
+        'Заполнение:      ' + iLabel,
+        'Постобработка:   ' + (needPost ? 'Да' : 'Нет'),
+        '',
+        '--- Расчёт ---',
+        'Итоговая цена:   ' + Math.round(price) + ' руб.',
+        'Время печати:    ' + formatTime(Math.round(time)),
+        '',
+        '--- Комментарий ---',
+        comment,
+        '',
+        '===================================',
+        '  Сформировано на 3dprint-calc.ru',
+        '==================================='
+      ];
+      var content = lines.join('\r\n');
+
+      var blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      var url  = URL.createObjectURL(blob);
+      var a    = document.createElement('a');
+      a.href   = url;
+      a.download = 'zakaz_3d_pechat.txt';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // ================================================================
+    //  ПОДПИСКА НА СОБЫТИЯ
+    // ================================================================
+
+    techRadios.forEach(function(r) {
+      r.addEventListener('change', function() {
+        applyAvailability();
+        updatePhotos();
+        calculate();
+      });
+    });
+
+    dimW.addEventListener('input', calculate);
+    dimD.addEventListener('input', calculate);
+    dimH.addEventListener('input', calculate);
+    matSelect.addEventListener('change', function() { updatePhotos(); calculate(); });
+    qualSelect.addEventListener('change', calculate);
+    infSelect.addEventListener('change', calculate);
+    postChk.addEventListener('change', calculate);
+    orderBtn.addEventListener('click', generateOrderFile);
+
+    // ================================================================
+    //  ИНИЦИАЛИЗАЦИЯ
+    // ================================================================
+
+    applyAvailability();
+    updatePhotos();
+    calculate();
+  </script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <list>
+          <option value="attrs" />
+          <option value="cachetools" />
+          <option value="certifi" />
+          <option value="charset-normalizer" />
+          <option value="docker" />
+          <option value="google-api-core" />
+          <option value="google-auth" />
+          <option value="google-cloud-aiplatform" />
+          <option value="google-cloud-core" />
+          <option value="google-cloud-storage" />
+          <option value="google-crc32c" />
+          <option value="google-resumable-media" />
+          <option value="googleapis-common-protos" />
+          <option value="greenlet" />
+          <option value="grpcio" />
+          <option value="grpcio-status" />
+          <option value="gunicorn" />
+          <option value="idna" />
+          <option value="inexactsearch" />
+          <option value="ipython-genutils" />
+          <option value="jsonschema" />
+          <option value="jsonschema-specifications" />
+          <option value="nbformat" />
+          <option value="platformdirs" />
+          <option value="proto-plus" />
+          <option value="protobuf" />
+          <option value="pyasn1" />
+          <option value="pymorphy3" />
+          <option value="pymorphy3-dicts-ru" />
+          <option value="pyspellchecker" />
+          <option value="pywin32" />
+          <option value="referencing" />
+          <option value="requests" />
+          <option value="rpds-py" />
+          <option value="rsa" />
+          <option value="six" />
+          <option value="traitlets" />
+          <option value="urllib3" />
+          <option value="waitress" />
+          <option value="websocket-client" />
+          <option value="zipp" />
+          <option value="DAWG-Python" />
+          <option value="Flask-Login" />
+          <option value="Flask-Uploads" />
+          <option value="Flask-Reuploaded" />
+          <option value="Flask-WTF" />
+          <option value="importlib_metadata" />
+          <option value="jupyter_core" />
+          <option value="pyasn1_modules" />
+          <option value="SQLAlchemy" />
+          <option value="typing_extensions" />
+          <option value="WTForms" />
+        </list>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>

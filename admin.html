@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Админ-панель — 3D Print Calculator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #ffffff;
+      --bg-card: #f6f8fa;
+      --bg-input: #ffffff;
+      --text: #1a1a1a;
+      --text-secondary: #6b7280;
+      --text-muted: #9ca3af;
+      --border: #e0e4e8;
+      --danger: #dc2626;
+      --success: #16a34a;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --font: -apple-system, 'Segoe UI', system-ui, sans-serif;
+    }
+    html { font-size: 16px; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 24px 16px 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .container { max-width: 800px; width: 100%; }
+
+    h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
+    p.desc { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 24px; }
+
+    /* --- Карточка --- */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 20px;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* --- Форма логина --- */
+    .login-box {
+      max-width: 360px;
+      margin: 60px auto;
+      text-align: center;
+    }
+    .login-box .field { margin-bottom: 14px; text-align: left; }
+    .login-box .field label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 4px;
+    }
+    .login-box .field input {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 0.95rem;
+      font-family: var(--font);
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      outline: none;
+    }
+    .login-box .field input:focus { border-color: #000; }
+    .login-error {
+      color: var(--danger);
+      font-size: 0.85rem;
+      margin-top: 8px;
+    }
+
+    /* --- Таблица конфига --- */
+    .config-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .config-table th {
+      text-align: left;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      padding: 8px 10px 6px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .config-table td {
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .config-table tr:last-child td { border-bottom: none; }
+    .config-table input[type="number"],
+    .config-table input[type="text"] {
+      width: 100%;
+      padding: 6px 8px;
+      font-size: 0.85rem;
+      font-family: var(--font);
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--text);
+      outline: none;
+    }
+    .config-table input:focus { border-color: #000; }
+    .config-table input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #000;
+    }
+    .config-table .key-col { font-weight: 500; white-space: nowrap; color: var(--text-secondary); font-size: 0.82rem; }
+    .config-table .group-row td {
+      font-weight: 600;
+      font-size: 0.85rem;
+      padding-top: 12px;
+      background: var(--bg);
+    }
+
+    /* --- Кнопки --- */
+    .btn {
+      padding: 10px 24px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      font-family: var(--font);
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn:hover { transform: scale(0.98); }
+    .btn:active { transform: scale(0.96); }
+    .btn-primary { background: #000; color: #fff; }
+    .btn-primary:hover { background: #333; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover { background: var(--bg-card); }
+    .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #000;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 100;
+    }
+    .toast.show { opacity: 1; }
+
+    /* --- Адаптив --- */
+    @media (max-width: 640px) {
+      body { padding: 16px 10px 32px; }
+      .card { padding: 16px 12px; }
+      .config-table { font-size: 0.82rem; }
+      .config-table td, .config-table th { padding: 4px 6px; }
+      .config-table input[type="number"] { min-width: 60px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="app">
+    <!-- Заглушка -- сюда рендерит скрипт -->
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ================================================================
+    //  УЧЁТНЫЕ ДАННЫЕ ДЛЯ ВХОДА
+    //  Можете сменить логин и пароль здесь.
+    // ================================================================
+    var ADMIN_USER = 'admin';
+    var ADMIN_PASS = 'admin123';
+
+    // ================================================================
+    //  ЭТАЛОННЫЙ КОНФИГ (дублируется из index.html)
+    // ================================================================
+    var defaultConfig = {
+      availability: {
+        sla: true,
+        materials: {
+          pla: true,
+          petg: true,
+          abs: true,
+          resin: true
+        }
+      },
+      density: {
+        pla:   1.24,
+        petg:  1.27,
+        abs:   1.04,
+        resin: 1.15
+      },
+      materials: {
+        fdm: {
+          pla:  { pricePerGram: 5,  timePerGram: 8  },
+          petg: { pricePerGram: 7,  timePerGram: 9  },
+          abs:  { pricePerGram: 8,  timePerGram: 10 }
+        },
+        sla: {
+          resin: { pricePerGram: 15, timePerGram: 5  }
+        }
+      },
+      quality: {
+        '0.12': { priceMultiplier: 1.5, timeMultiplier: 1.6 },
+        '0.2':  { priceMultiplier: 1.0, timeMultiplier: 1.0 },
+        '0.28': { priceMultiplier: 0.8, timeMultiplier: 0.7 }
+      },
+      infill: {
+        '15':  { priceMultiplier: 0.85, timeMultiplier: 0.9 },
+        '50':  { priceMultiplier: 1.0,  timeMultiplier: 1.0 },
+        '100': { priceMultiplier: 1.3,  timeMultiplier: 1.4 }
+      },
+      postProcessing: {
+        fdm: 200,
+        sla: 300
+      },
+      minPrice: 500,
+      minTime:  30
+    };
+
+    // ================================================================
+    //  ЗАГРУЗКА КОНФИГА
+    // ================================================================
+    function loadConfig() {
+      try {
+        var saved = localStorage.getItem('pricingConfig');
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+      return JSON.parse(JSON.stringify(defaultConfig));
+    }
+
+    function saveConfig(cfg) {
+      localStorage.setItem('pricingConfig', JSON.stringify(cfg, null, 2));
+    }
+
+    // ================================================================
+    //  ПРОВЕРКА АУТЕНТИФИКАЦИИ
+    // ================================================================
+    function getUrlParams() {
+      var params = {};
+      var search = window.location.search.substring(1);
+      if (!search) return params;
+      search.split('&').forEach(function(pair) {
+        var parts = pair.split('=');
+        if (parts.length === 2) {
+          params[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1]);
+        }
+      });
+      return params;
+    }
+
+    function checkAuth() {
+      var params = getUrlParams();
+      return params.name === ADMIN_USER && params.password === ADMIN_PASS;
+    }
+
+    // ================================================================
+    //  ТОСТ-УВЕДОМЛЕНИЕ
+    // ================================================================
+    function showToast(msg) {
+      var el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      setTimeout(function() { el.classList.remove('show'); }, 2500);
+    }
+
+    // ================================================================
+    //  РЕНДЕРИНГ ПАНЕЛИ УПРАВЛЕНИЯ
+    // ================================================================
+    function renderAdmin() {
+      var cfg = loadConfig();
+      var html = '';
+      html += '<div style="text-align:center;padding:20px 0 8px;">';
+      html += '<h1>Панель управления</h1>';
+      html += '<p class="desc">Редактирование цен и коэффициентов калькулятора. Изменения сохраняются в браузере.</p>';
+      html += '</div>';
+
+      // Доступность
+      html += '<div class="card">';
+      html += '<div class="card-title">Доступность</div>';
+      html += '<table class="config-table">';
+      html += '<tr><th>Параметр</th><th>Доступен</th></tr>';
+      html += '<tr><td class="key-col">SLA печать</td>';
+      html += '<td><input type="checkbox" id="avail-sla"' + (cfg.availability && cfg.availability.sla ? ' checked' : '') + '></td></tr>';
+      html += '<tr><td class="key-col">PLA</td>';
+      html += '<td><input type="checkbox" id="avail-pla"' + (cfg.availability && cfg.availability.materials && cfg.availability.materials.pla ? ' checked' : '') + '></td></tr>';
+      html += '<tr><td class="key-col">PETG</td>';
+      html += '<td><input type="checkbox" id="avail-petg"' + (cfg.availability && cfg.availability.materials && cfg.availability.materials.petg ? ' checked' : '') + '></td></tr>';
+      html += '<tr><td class="key-col">ABS</td>';
+      html += '<td><input type="checkbox" id="avail-abs"' + (cfg.availability && cfg.availability.materials && cfg.availability.materials.abs ? ' checked' : '') + '></td></tr>';
+      html += '<tr><td class="key-col">Смола (Resin)</td>';
+      html += '<td><input type="checkbox" id="avail-resin"' + (cfg.availability && cfg.availability.materials && cfg.availability.materials.resin ? ' checked' : '') + '></td></tr>';
+      html += '</table></div>';
+
+      html += '<div class="card">';
+      html += '<div class="card-title">Плотность материалов (г/см3)</div>';
+      html += '<table class="config-table">';
+      html += '<tr><th>Материал</th><th>Плотность</th></tr>';
+      var densityKeys = Object.keys(cfg.density);
+      for (var di = 0; di < densityKeys.length; di++) {
+        var k = densityKeys[di];
+        html += '<tr><td class="key-col">' + k + '</td>';
+        html += '<td><input type="number" step="0.01" id="density-' + k + '" value="' + cfg.density[k] + '"></td></tr>';
+      }
+      html += '</table></div>';
+
+      // Материалы FDM
+      html += '<div class="card">';
+      html += '<div class="card-title">FDM материалы — цена и время</div>';
+      html += '<table class="config-table">';
+      html += '<tr><th>Материал</th><th>Цена за грамм (руб)</th><th>Минут на грамм</th></tr>';
+      var fdmKeys = Object.keys(cfg.materials.fdm);
+      for (var fi = 0; fi < fdmKeys.length; fi++) {
+        var fk = fdmKeys[fi];
+        var m = cfg.materials.fdm[fk];
+        html += '<tr><td class="key-col">' + fk + '</td>';
+        html += '<td><input type="number" step="0.5" id="fdm-' + fk + '-price" value="' + m.pricePerGram + '"></td>';
+        html += '<td><input type="number" step="0.5" id="fdm-' + fk + '-time" value="' + m.timePerGram + '"></td></tr>';
+      }
+      html += '</table></div>';
+
+      // Материалы SLA
+      html += '<div class="card">';
+      html += '<div class="card-title">SLA материалы — цена и время</div>';
+      html += '<table class="config-table">';
+      html += '<tr><th>Материал</th><th>Цена за грамм (руб)</th><th>Минут на грамм</th></tr>';
+      var slaKeys = Object.keys(cfg.materials.sla);
+      for (var si = 0; si < slaKeys.length; si++) {
+        var sk = slaKeys[si];
+        var sm = cfg.materials.sla[sk];
+        html += '<tr><td class="key-col">' + sk + '</td>';
+        html += '<td><input type="number" step="0.5" id="sla-' + sk + '-price" value="' + sm.pricePerGram + '"></td>';
+        html += '<td><input type="number" step="0.5" id="sla-' + sk + '-time" value="' + sm.timePerGram + '"></td></tr>';
+      }
+      html += '</table></div>';
+
+      // Качество
+      html += '<div class="card">';
+      html += '<div class="card-title">Высота слоя — множители</div>';
+      html += '<table class="config-table">';
+      html += '<tr><th>Слой (мм)</th><th>Множитель цены</th><th>Множитель времени</th></tr>';
+      var qKeys = Object.keys(cfg.quality);
+      for (var qi = 0; qi < qKeys.length; qi++) {
+        var qk = qKeys[qi];
+        var qv = cfg.quality[qk];
+        html += '<tr><td class="key-col">' + qk + '</td>';
+        html += '<td><input type="number" step="0.05" id="qual-' + qk + '-price" value="' + qv.priceMultiplier + '"></td>';
+        html += '<td><input type="number" step="0.05" id="qual-' + qk + '-time" value="' + qv.timeMultiplier + '"></td></tr>';
+      }
+      html += '</table></div>';
+
+      // Заполнение
+      html += '<div class="card">';
+      html += '<div class="card-title">Заполнение — множители</div>';
+      html += '<table class="config-table">';
+      html += '<tr><th>Заполнение</th><th>Множитель цены</th><th>Множитель времени</th></tr>';
+      var iKeys = Object.keys(cfg.infill);
+      for (var ii = 0; ii < iKeys.length; ii++) {
+        var ik = iKeys[ii];
+        var iv = cfg.infill[ik];
+        html += '<tr><td class="key-col">' + ik + '%</td>';
+        html += '<td><input type="number" step="0.05" id="inf-' + ik + '-price" value="' + iv.priceMultiplier + '"></td>';
+        html += '<td><input type="number" step="0.05" id="inf-' + ik + '-time" value="' + iv.timeMultiplier + '"></td></tr>';
+      }
+      html += '</table></div>';
+
+      // Постобработка
+      html += '<div class="card">';
+      html += '<div class="card-title">Постобработка — доплата (руб)</div>';
+      html += '<table class="config-table">';
+      html += '<tr><th>Технология</th><th>Стоимость</th></tr>';
+      html += '<tr><td class="key-col">FDM</td><td><input type="number" step="10" id="post-fdm" value="' + cfg.postProcessing.fdm + '"></td></tr>';
+      html += '<tr><td class="key-col">SLA</td><td><input type="number" step="10" id="post-sla" value="' + cfg.postProcessing.sla + '"></td></tr>';
+      html += '</table></div>';
+
+      // Минимальные пороги
+      html += '<div class="card">';
+      html += '<div class="card-title">Минимальные значения</div>';
+      html += '<table class="config-table">';
+      html += '<tr><th>Параметр</th><th>Значение</th></tr>';
+      html += '<tr><td class="key-col">Мин. цена (руб)</td><td><input type="number" step="50" id="minPrice" value="' + cfg.minPrice + '"></td></tr>';
+      html += '<tr><td class="key-col">Мин. время (мин)</td><td><input type="number" step="5" id="minTime" value="' + cfg.minTime + '"></td></tr>';
+      html += '</table></div>';
+
+      // Кнопки
+      html += '<div class="btn-group">';
+      html += '<button class="btn btn-primary" id="saveBtn">Сохранить изменения</button>';
+      html += '<button class="btn btn-outline" id="resetBtn">Сбросить на defaults</button>';
+      html += '<button class="btn btn-outline" id="exportBtn">Скопировать config в буфер</button>';
+      html += '<a href="index.html" class="btn btn-outline" style="text-decoration:none;display:inline-flex;align-items:center;">На главную</a>';
+      html += '</div>';
+
+      document.getElementById('app').innerHTML = html;
+      bindAdminEvents();
+    }
+
+    // ================================================================
+    //  СБОР ДАННЫХ ИЗ ФОРМЫ
+    // ================================================================
+    function collectConfig() {
+      var cfg = JSON.parse(JSON.stringify(defaultConfig));
+
+      // Доступность
+      cfg.availability = {
+        sla: document.getElementById('avail-sla').checked,
+        materials: {
+          pla:  document.getElementById('avail-pla').checked,
+          petg: document.getElementById('avail-petg').checked,
+          abs:  document.getElementById('avail-abs').checked,
+          resin: document.getElementById('avail-resin').checked
+        }
+      };
+
+      // Плотность
+      var densityKeys = Object.keys(cfg.density);
+      for (var di = 0; di < densityKeys.length; di++) {
+        var k = densityKeys[di];
+        cfg.density[k] = parseFloat(document.getElementById('density-' + k).value) || cfg.density[k];
+      }
+
+      // FDM материалы
+      var fdmKeys = Object.keys(cfg.materials.fdm);
+      for (var fi = 0; fi < fdmKeys.length; fi++) {
+        var fk = fdmKeys[fi];
+        cfg.materials.fdm[fk].pricePerGram = parseFloat(document.getElementById('fdm-' + fk + '-price').value) || cfg.materials.fdm[fk].pricePerGram;
+        cfg.materials.fdm[fk].timePerGram  = parseFloat(document.getElementById('fdm-' + fk + '-time').value) || cfg.materials.fdm[fk].timePerGram;
+      }
+
+      // SLA материалы
+      var slaKeys = Object.keys(cfg.materials.sla);
+      for (var si = 0; si < slaKeys.length; si++) {
+        var sk = slaKeys[si];
+        cfg.materials.sla[sk].pricePerGram = parseFloat(document.getElementById('sla-' + sk + '-price').value) || cfg.materials.sla[sk].pricePerGram;
+        cfg.materials.sla[sk].timePerGram  = parseFloat(document.getElementById('sla-' + sk + '-time').value) || cfg.materials.sla[sk].timePerGram;
+      }
+
+      // Качество
+      var qKeys = Object.keys(cfg.quality);
+      for (var qi = 0; qi < qKeys.length; qi++) {
+        var qk = qKeys[qi];
+        cfg.quality[qk].priceMultiplier = parseFloat(document.getElementById('qual-' + qk + '-price').value) || cfg.quality[qk].priceMultiplier;
+        cfg.quality[qk].timeMultiplier  = parseFloat(document.getElementById('qual-' + qk + '-time').value) || cfg.quality[qk].timeMultiplier;
+      }
+
+      // Заполнение
+      var iKeys = Object.keys(cfg.infill);
+      for (var ii = 0; ii < iKeys.length; ii++) {
+        var ik = iKeys[ii];
+        cfg.infill[ik].priceMultiplier = parseFloat(document.getElementById('inf-' + ik + '-price').value) || cfg.infill[ik].priceMultiplier;
+        cfg.infill[ik].timeMultiplier  = parseFloat(document.getElementById('inf-' + ik + '-time').value) || cfg.infill[ik].timeMultiplier;
+      }
+
+      // Постобработка
+      cfg.postProcessing.fdm = parseFloat(document.getElementById('post-fdm').value) || cfg.postProcessing.fdm;
+      cfg.postProcessing.sla = parseFloat(document.getElementById('post-sla').value) || cfg.postProcessing.sla;
+
+      // Минимальные
+      cfg.minPrice = parseFloat(document.getElementById('minPrice').value) || cfg.minPrice;
+      cfg.minTime  = parseFloat(document.getElementById('minTime').value) || cfg.minTime;
+
+      return cfg;
+    }
+
+    // ================================================================
+    //  ПОДПИСКА НА КНОПКИ
+    // ================================================================
+    function bindAdminEvents() {
+      document.getElementById('saveBtn').addEventListener('click', function() {
+        var cfg = collectConfig();
+        saveConfig(cfg);
+        showToast('Конфигурация сохранена. Изменения применятся на главной странице.');
+      });
+
+      document.getElementById('resetBtn').addEventListener('click', function() {
+        if (confirm('Сбросить все настройки до заводских?')) {
+          saveConfig(defaultConfig);
+          renderAdmin();
+          showToast('Настройки сброшены до стандартных.');
+        }
+      });
+
+      document.getElementById('exportBtn').addEventListener('click', function() {
+        var cfg = collectConfig();
+        var text = JSON.stringify(cfg, null, 2);
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function() {
+            showToast('JSON скопирован в буфер обмена.');
+          })['catch'](function() {
+            fallbackCopy(text);
+          });
+        } else {
+          fallbackCopy(text);
+        }
+      });
+    }
+
+    function fallbackCopy(text) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); showToast('JSON скопирован в буфер обмена.'); }
+      catch (e) { showToast('Не удалось скопировать. Выделите и скопируйте вручную.'); }
+      document.body.removeChild(ta);
+    }
+
+    // ================================================================
+    //  РЕНДЕРИНГ ФОРМЫ ВХОДА
+    // ================================================================
+    function renderLogin(error) {
+      var html = '';
+      html += '<div class="login-box">';
+      html += '<h1 style="margin-bottom:16px;">Вход в панель</h1>';
+      html += '<p class="desc" style="margin-bottom:20px;">Введите имя и пароль из адресной строки.</p>';
+      html += '<p class="desc" style="font-size:0.8rem;color:var(--text-muted);">Пример: admin.html?name=admin&password=admin123</p>';
+      html += '<div style="margin-top:16px;">';
+      html += '<div class="field"><label>Имя</label><input type="text" id="loginName" placeholder="admin"></div>';
+      html += '<div class="field"><label>Пароль</label><input type="password" id="loginPass" placeholder="••••••••"></div>';
+      if (error) html += '<div class="login-error">' + error + '</div>';
+      html += '<button class="btn btn-primary" id="loginBtn" style="width:100%;margin-top:12px;">Войти</button>';
+      html += '</div></div>';
+
+      document.getElementById('app').innerHTML = html;
+
+      document.getElementById('loginBtn').addEventListener('click', function() {
+        var name = document.getElementById('loginName').value.trim();
+        var pass = document.getElementById('loginPass').value.trim();
+        if (name === ADMIN_USER && pass === ADMIN_PASS) {
+          // Перенаправляем с параметрами в URL
+          window.location.href = 'admin.html?name=' + encodeURIComponent(name) + '&password=' + encodeURIComponent(pass);
+        } else {
+          renderLogin('Неверное имя или пароль.');
+        }
+      });
+    }
+
+    // ================================================================
+    //  ИНИЦИАЛИЗАЦИЯ
+    // ================================================================
+    if (checkAuth()) {
+      renderAdmin();
+    } else {
+      renderLogin(null);
+    }
+  </script>
+</body>
+</html>
