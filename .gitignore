@@ -1,0 +1,27 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+*.egg
+dist/
+build/
+*.virtualenv
+pyvenv.cfg
+
+# IDE
+.idea/
+*.iml
+workspace.xml
+misc.xml
+modules.xml
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Project
+.virtualenvs/
