@@ -80,6 +80,13 @@ footer{margin-top:32px;font-size:.78rem;color:var(--text-muted);text-align:cente
 <footer>Нажмите &laquo;Сформировать заказ&raquo;, чтобы скачать .txt-файл для отправки исполнителю.</footer>
 
 <script>
+// ===== REVOKED VERSIONS =====
+// Карта отозванных версий исполнителей.
+// Ключ — ID исполнителя, значение — версия конфига, с которой ссылка считается НЕДЕЙСТВИТЕЛЬНОЙ.
+// Пример: { "test": 2 } — ссылки с v < 2 будут показывать ошибку.
+// После отзыва исполнителя администратор должен обновить эту карту и перезалить сайт.
+var REVOKED_VERSIONS = {};
+
 // ===== BASE CONFIG =====
 var baseConfig = {
   technologies: {
@@ -125,8 +132,44 @@ var baseConfig = {
   minPrice: 500, minTime: 30
 };
 
+// ===== URL PARAMS =====
+function getUrlParams() {
+  var p = {}, s = window.location.search.substring(1);
+  if (!s) return p;
+  s.split('&').forEach(function(pair) {
+    var parts = pair.split('=');
+    if (parts.length === 2) p[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1]);
+  });
+  return p;
+}
+
+// Рекурсивно накладывает diff поверх base
+function configApply(base, diff) {
+  if (diff === null || diff === undefined || typeof diff !== 'object' || Array.isArray(diff)) return diff;
+  var out = JSON.parse(JSON.stringify(base));
+  var keys = Object.keys(diff);
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    var dv = diff[k];
+    if (dv === null || dv === undefined) continue;
+    if (typeof dv !== 'object' || Array.isArray(dv)) { out[k] = dv; continue; }
+    var bv = out[k];
+    if (bv === undefined) { out[k] = JSON.parse(JSON.stringify(dv)); continue; }
+    out[k] = configApply(bv, dv);
+  }
+  return out;
+}
+
 // ===== LOAD CONFIG =====
 function loadConfig() {
+  // Проверка отзыва: если ссылка содержит ?e=...&v=...
+  var params = getUrlParams();
+  var execName = params.e || '';
+  var execVer = parseInt(params.v || '-1', 10);
+  if (execName && execVer >= 0 && REVOKED_VERSIONS[execName] !== undefined && execVer < REVOKED_VERSIONS[execName]) {
+    return { _revoked: true, _executor: execName };
+  }
+
   var hash = window.location.hash;
   if (hash && hash.indexOf('#config=') === 0) {
     try {
@@ -134,7 +177,8 @@ function loadConfig() {
       var binary = atob(encoded);
       var bytes = new Uint8Array(binary.length);
       for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-      return JSON.parse(new TextDecoder('utf-8').decode(bytes));
+      var diff = JSON.parse(new TextDecoder('utf-8').decode(bytes));
+      return configApply(baseConfig, diff);
     } catch(e) {}
   }
   try {
@@ -190,6 +234,19 @@ var dimW, dimD, dimH, weightDisp, techRadios, matSelect, colorSelect, qualSelect
 
 function render() {
   cfg = loadConfig();
+
+  // Если конфиг отозван — показать заглушку
+  if (cfg && cfg._revoked) {
+    document.getElementById('app').innerHTML = '<header><h1>3D Print Calculator</h1></header>'
+      + '<div class="card" style="text-align:center;padding:40px 20px;">'
+      + '<div style="font-size:2.5rem;margin-bottom:16px;">&#128274;</div>'
+      + '<h2 style="margin-bottom:12px;">Ссылка устарела</h2>'
+      + '<p class="desc">Исполнитель "' + esc(cfg._executor) + '" больше не использует эту ссылку.</p>'
+      + '<p class="desc" style="margin-top:8px;">Пожалуйста, запросите новую ссылку у исполнителя.</p>'
+      + '</div>';
+    return;
+  }
+
   techKeys = []; var tks = Object.keys(cfg.technologies);
   for (var ti = 0; ti < tks.length; ti++) { if (cfg.technologies[tks[ti]].enabled) techKeys.push(tks[ti]); }
   qKeys = Object.keys(cfg.quality);

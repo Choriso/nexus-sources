@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Админ-панель — 3D Print Calculator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#ffffff;--bg-card:#f6f8fa;--bg-input:#ffffff;--text:#1a1a1a;--text-secondary:#6b7280;--text-muted:#9ca3af;--border:#e0e4e8;--danger:#dc2626;--success:#16a34a;--radius:12px;--radius-sm:8px;--font:-apple-system,'Segoe UI',system-ui,sans-serif}
@@ -63,7 +64,7 @@ p.desc{color:var(--text-secondary);font-size:.9rem;margin-bottom:24px}
 .url-box input{flex:1;padding:9px 12px;font-size:.82rem;font-family:var(--font);border:1px solid var(--border);border-radius:var(--radius-sm);outline:none;background:var(--bg-input);color:var(--text)}
 .url-box input:focus{border-color:#000}
 .qr-box{text-align:center;margin-top:12px}
-.qr-box img{border:1px solid var(--border);border-radius:8px;max-width:180px}
+.qr-box img,.qr-box canvas,.qr-box svg{border:1px solid var(--border);border-radius:8px;max-width:260px;height:auto;display:inline-block}
 
 .contact-line{margin-bottom:10px}
 .contact-line label{display:block;font-size:.78rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px}
@@ -86,8 +87,25 @@ p.desc{color:var(--text-secondary);font-size:.9rem;margin-bottom:24px}
 
 <script>
 // ===== CREDENTIALS =====
-var ADMIN_USER = 'admin';
-var ADMIN_PASS = 'admin123';
+    var ADMIN_USER = 'admin';
+    var ADMIN_PASS = 'admin123';
+
+    // Соль для генерации ключей доступа исполнителей.
+    // Если сменить этот ключ и перезалить сайт — все старые ссылки перестанут работать.
+    var ACCESS_SALT = '3dprint_salt_2024_change_me';
+    var ACCESS_WHITELIST_KEY = '3dpc_whitelist';
+
+    // Простая хеш-функция: генерирует ключ доступа для исполнителя
+    function makeKey(id, rv) {
+      var str = id + ':' + ACCESS_SALT + ':' + (rv || 0);
+      var hash = 0;
+      for (var i = 0; i < str.length; i++) {
+        var c = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + c;
+        hash = hash & hash;
+      }
+      return Math.abs(hash).toString(36) + (hash < 0 ? 'a' : 'b');
+    }
 
 // ===== DEFAULT EXECUTOR CONFIG =====
 function defaultExecutorConfig(name) {
@@ -142,20 +160,12 @@ function defaultExecutorConfig(name) {
     },
     postProcessing: { fdm: 200, sla: 300 },
     minPrice: 500,
-    minTime: 30
+    minTime: 30,
+    revokeVersion: 0
   };
 }
 
 // ===== STORAGE HELPERS =====
-function saveExecutors(list) {
-  localStorage.setItem('3dpc_executors', JSON.stringify(list));
-}
-
-function loadExecutors() {
-  try { var d = localStorage.getItem('3dpc_executors'); if (d) return JSON.parse(d); } catch(e) {}
-  return {};
-}
-
 function saveExecutorConfig(name, cfg) {
   localStorage.setItem('3dpc_cfg_' + name, JSON.stringify(cfg));
 }
@@ -215,10 +225,41 @@ function decodeConfig(encoded) {
   return JSON.parse(json);
 }
 
-function generateExecutorUrl(cfg) {
-  var encoded = encodeConfig(cfg);
+// Базовая конфигурация (без исполнителя) для вычисления diff
+function getBaseCfg() {
+  var def = defaultExecutorConfig('');
+  delete def.executor;
+  delete def.revokeVersion;
+  return def;
+}
+
+// Рекурсивно собирает только отличающиеся поля
+function configDiff(base, custom) {
+  if (base === null || base === undefined || typeof base !== 'object') return (base !== custom) ? custom : undefined;
+  if (Array.isArray(base) || Array.isArray(custom)) return (JSON.stringify(base) !== JSON.stringify(custom)) ? custom : undefined;
+  var res = {};
+  var keys = Object.keys(custom);
+  var hasDiff = false;
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    if (!(k in base)) { res[k] = custom[k]; hasDiff = true; continue; }
+    var d = configDiff(base[k], custom[k]);
+    if (d !== undefined) { res[k] = d; hasDiff = true; }
+  }
+  return hasDiff ? res : undefined;
+}
+
+function generateExecutorUrl(cfg, execId) {
+  var baseCfg = getBaseCfg();
+  var diff = configDiff(baseCfg, cfg) || {};
+  // Всегда включаем executor и revokeVersion
+  diff.executor = cfg.executor;
+  diff.revokeVersion = cfg.revokeVersion || 0;
+  var encoded = encodeConfig(diff);
+  var rev = diff.revokeVersion;
+  var id = execId || (cfg.executor && cfg.executor.name) || 'executor';
   var base = window.location.origin + window.location.pathname.replace('admin.html','') + 'index.html';
-  return base + '#config=' + encoded;
+  return base + '?e=' + encodeURIComponent(id) + '&v=' + rev + '#config=' + encoded;
 }
 
 // ===== RENDER =====
@@ -229,28 +270,98 @@ function render() {
 
   if (pname === ADMIN_USER && ppass === ADMIN_PASS) { renderOwner(); return; }
 
-  var executors = loadExecutors();
-  if (executors[pname] && executors[pname] === ppass) { renderExecutor(pname); return; }
+  // Executor login via ?executor=ID&key=HASH
+  var ename = params.executor || '';
 
-  // First login: auto-provision if URL has valid name+password
-  if (pname && ppass && pname !== ADMIN_USER && /^[a-zA-Z0-9_-]+$/.test(pname)) {
-    executors[pname] = ppass;
-    saveExecutors(executors);
-    saveExecutorConfig(pname, defaultExecutorConfig(pname));
-    renderExecutor(pname);
+  // Текущая версия доступа (хранится в localStorage, управляется админом)
+  var currentVersion = getAccessVersion();
+
+  // Check localStorage session first (быстрый вход без URL)
+  var sess = getExecutorSession();
+  if (sess && sess.name) {
+    if (sess.v !== currentVersion) {
+      clearExecutorSession();
+      renderLogin('Ссылка доступа устарела. Запросите новую у администратора.');
+      return;
+    }
+    // Per-executor revoke check: session rv должна быть >= config revokeVersion
+    // Если конфига нет или его версия ниже — сессия недействительна
+    var sessCfg = loadExecutorConfig(sess.name);
+    if (sessCfg && sess.rv !== undefined && sess.rv < (sessCfg.revokeVersion || 0)) {
+      clearExecutorSession();
+      renderLogin('Ваш доступ отозван. Обратитесь к администратору за новой ссылкой.');
+      return;
+    }
+    renderExecutor(sess.name);
     return;
+  }
+
+  // Первый вход или вход после смены версии — через URL с ключом
+  var ekey = params.key || '';
+  var erv = parseInt(params.rv || '0', 10);
+  if (ename && ekey && /^[a-zA-Z0-9_-]+$/.test(ename)) {
+    var expected = makeKey(ename, erv);
+    if (ekey === expected) {
+      var cfg = null;
+      // Если в URL есть cfg — используем его (конфиг от администратора)
+      if (params.cfg) {
+        try { cfg = decodeConfig(params.cfg); } catch(e) {}
+      }
+      if (!cfg) {
+        cfg = loadExecutorConfig(ename);
+      }
+      if (!cfg) {
+        cfg = defaultExecutorConfig(ename);
+      }
+      // Синхронизируем revokeVersion из URL в конфиг (админ мог отозвать)
+      if (erv > (cfg.revokeVersion || 0)) {
+        cfg.revokeVersion = erv;
+      }
+      saveExecutorConfig(ename, cfg);
+      setExecutorSession(ename, currentVersion, erv);
+      renderExecutor(ename);
+      return;
+    }
   }
 
   renderLogin();
 }
 
+function loadWhitelist() {
+  try { var d = localStorage.getItem(ACCESS_WHITELIST_KEY); if (d) return JSON.parse(d); } catch(e) {}
+  return {};
+}
+
+function saveWhitelist(w) {
+  localStorage.setItem(ACCESS_WHITELIST_KEY, JSON.stringify(w));
+}
+
+function getExecutorSession() {
+  try { var d = localStorage.getItem('3dpc_exec_session'); if (d) return JSON.parse(d); } catch(e) {}
+  return null;
+}
+
+function getAccessVersion() {
+  return parseInt(localStorage.getItem('3dpc_revoke_version') || '0', 10);
+}
+
+function setExecutorSession(name, ver, rv) {
+  var s = {name: name, v: ver || getAccessVersion()};
+  if (rv !== undefined) s.rv = rv;
+  localStorage.setItem('3dpc_exec_session', JSON.stringify(s));
+}
+
+function clearExecutorSession() {
+  localStorage.removeItem('3dpc_exec_session');
+}
+
 function renderLogin(err) {
   var h = '<div class="login-box"><h1 style="margin-bottom:12px;">3D Print Admin</h1>';
-  h += '<p class="desc" style="margin-bottom:16px;">Введите имя и пароль из адресной строки</p>';
-  h += '<p class="text-muted" style="margin-bottom:16px;">admin.html?name=...&password=...</p>';
-  h += '<div class="field"><label>Имя</label><input type="text" id="loginName"></div>';
-  h += '<div class="field"><label>Пароль</label><input type="password" id="loginPass"></div>';
+  h += '<p class="desc" style="margin-bottom:16px;">Администратор: введите имя и пароль.</p>';
+  h += '<p class="desc" style="margin-bottom:16px;">Исполнитель: используйте персональную ссылку от администратора.</p>';
   if (err) h += '<div class="login-error">' + err + '</div>';
+  h += '<div class="field"><label>Имя администратора</label><input type="text" id="loginName"></div>';
+  h += '<div class="field"><label>Пароль</label><input type="password" id="loginPass"></div>';
   h += '<button class="btn btn-primary" id="loginBtn" style="width:100%;margin-top:12px;">Войти</button></div>';
   document.getElementById('app').innerHTML = h;
   document.getElementById('loginBtn').addEventListener('click', function() {
@@ -259,12 +370,7 @@ function renderLogin(err) {
     if (n === ADMIN_USER && p === ADMIN_PASS) {
       window.location.href = 'admin.html?name=' + encodeURIComponent(n) + '&password=' + encodeURIComponent(p);
     } else {
-      var execs = loadExecutors();
-      if (execs[n] && execs[n] === p) {
-        window.location.href = 'admin.html?name=' + encodeURIComponent(n) + '&password=' + encodeURIComponent(p);
-      } else {
-        renderLogin('Неверное имя или пароль.');
-      }
+      renderLogin('Неверное имя или пароль.');
     }
   });
 }
@@ -274,7 +380,6 @@ var _currentTab = 'executors';
 
 function renderOwner() {
   var contact = loadOwnerContact();
-  var executors = loadExecutors();
 
   var h = '<div class="text-center" style="padding:16px 0 4px;"><h1>Панель управления</h1>';
   h += '<p class="desc">Управление исполнителями и генерация ссылок</p></div>';
@@ -290,25 +395,33 @@ function renderOwner() {
   // Tab: Executors
   h += '<div id="tab-executors"' + (_currentTab === 'executors' ? '' : ' class="hidden"') + '>';
   h += '<div class="card"><div class="card-title">Список исполнителей</div>';
-  var names = Object.keys(executors);
+  var whitelist = loadWhitelist();
+  var names = Object.keys(whitelist);
   if (names.length === 0) h += '<p class="text-muted">Нет исполнителей. Создайте первого.</p>';
   names.forEach(function(n) {
     var cfg = loadExecutorConfig(n);
     var lbl = cfg && cfg.executor && cfg.executor.name ? cfg.executor.name : n;
-    h += '<div class="executor-row"><span class="name">' + escHtml(lbl) + ' <span class="text-muted">(' + escHtml(n) + ')</span></span>';
-    var loginUrl = window.location.origin + window.location.pathname + '?name=' + encodeURIComponent(n) + '&password=' + encodeURIComponent(executors[n]);
+    var rv = cfg ? (cfg.revokeVersion || 0) : 0;
+    var key = makeKey(n, rv);
+    var cfgEncoded = cfg ? encodeConfig(cfg) : '';
+    var loginUrl = window.location.origin + window.location.pathname + '?executor=' + encodeURIComponent(n) + '&key=' + encodeURIComponent(key) + '&rv=' + rv + '&cfg=' + encodeURIComponent(cfgEncoded);
+    h += '<div class="executor-row"><span class="name">' + escHtml(lbl) + ' <span class="text-muted">(' + escHtml(n) + ')</span>';
+    h += ' <span class="text-muted" style="font-size:.75rem;">v' + rv + '</span></span>';
     h += '<div class="actions">';
     h += '<button class="btn btn-sm btn-outline" data-edit="' + escHtml(n) + '">Настроить</button>';
     h += '<button class="btn btn-sm btn-outline" data-link="' + escHtml(n) + '">Ссылка клиенту</button>';
-    h += '<button class="btn btn-sm btn-outline" data-adminlink="' + escHtml(loginUrl) + '" title="Ссылка для входа исполнителя">Логин</button>';
+    h += '<button class="btn btn-sm btn-outline" data-adminlink="' + escHtml(loginUrl) + '" data-adminname="' + escHtml(lbl) + '" title="Ссылка для входа исполнителя">Логин</button>';
+    h += '<button class="btn btn-sm btn-outline" data-revoke="' + escHtml(n) + '" style="color:var(--danger);border-color:var(--danger);">Отозвать</button>';
     h += '<button class="btn btn-sm btn-danger" data-del="' + escHtml(n) + '">X</button>';
     h += '</div></div>';
   });
   h += '<div class="flex" style="margin-top:12px;">';
   h += '<input type="text" id="newExecName" placeholder="ID исполнителя (лат.)" style="padding:8px 10px;font-size:.85rem;border:1px solid var(--border);border-radius:var(--radius-sm);outline:none;flex:1;">';
-  h += '<input type="password" id="newExecPass" placeholder="Пароль" style="padding:8px 10px;font-size:.85rem;border:1px solid var(--border);border-radius:var(--radius-sm);outline:none;width:140px;">';
   h += '<button class="btn btn-primary btn-sm" id="addExecBtn">+ Добавить</button>';
-  h += '</div></div>';
+  h += '</div>';
+  h += '<p class="text-muted" style="margin-top:12px;font-size:.8rem;">Красная кнопка &laquo;Отозвать&raquo; — увеличивает версию конфига. После отзыва исполнитель должен заново сгенерировать ссылку клиенту. Старые ссылки перестанут работать (проверка в index.html).</p>';
+  h += '<p class="text-muted" style="font-size:.8rem;">Чтобы отозвать доступ ВСЕМ исполнителям сразу — обновите ACCESS_SALT в admin.html и index.html, затем перезалейте сайт.</p>';
+  h += '</div>';
 
   // Executor config editor (shown when editing)
   h += '<div id="execEditor" class="hidden"></div>';
@@ -365,16 +478,14 @@ function bindOwnerEvents() {
   if (addBtn) {
     addBtn.addEventListener('click', function() {
       var name = document.getElementById('newExecName').value.trim();
-      var pass = document.getElementById('newExecPass').value.trim();
-      if (!name || !pass) { showToast('Заполните ID и пароль.'); return; }
+      if (!name) { showToast('Введите ID исполнителя.'); return; }
       if (!/^[a-zA-Z0-9_-]+$/.test(name)) { showToast('ID только латиница, цифры, -, _'); return; }
-      var execs = loadExecutors();
-      if (execs[name]) { showToast('Исполнитель с таким ID уже существует.'); return; }
-      execs[name] = pass;
-      saveExecutors(execs);
+      var whitelist = loadWhitelist();
+      if (whitelist[name]) { showToast('Исполнитель с таким ID уже существует.'); return; }
+      whitelist[name] = 1;
+      saveWhitelist(whitelist);
       // Create default config
-      var cfg = defaultExecutorConfig(name);
-      saveExecutorConfig(name, cfg);
+      saveExecutorConfig(name, defaultExecutorConfig(name));
       showToast('Исполнитель ' + name + ' создан.');
       renderOwner();
     });
@@ -384,12 +495,27 @@ function bindOwnerEvents() {
   document.querySelectorAll('[data-del]').forEach(function(el) {
     el.addEventListener('click', function() {
       var name = this.getAttribute('data-del');
-      if (!confirm('Удалить исполнителя "' + name + '"?')) return;
-      var execs = loadExecutors();
-      delete execs[name];
-      saveExecutors(execs);
+      if (!confirm('Удалить исполнителя "' + name + '"? Он потеряет доступ к конфигуратору.')) return;
+      var whitelist = loadWhitelist();
+      delete whitelist[name];
+      saveWhitelist(whitelist);
       localStorage.removeItem('3dpc_cfg_' + name);
       showToast('Исполнитель ' + name + ' удалён.');
+      renderOwner();
+    });
+  });
+
+  // Per-executor revoke
+  document.querySelectorAll('[data-revoke]').forEach(function(el) {
+    el.addEventListener('click', function() {
+      var name = this.getAttribute('data-revoke');
+      if (!confirm('Отозвать ссылки исполнителя "' + name + '"?\n\nВсе существующие клиентские ссылки этого исполнителя перестанут работать. Исполнитель потеряет доступ к инструменту до получения новой ссылки.')) return;
+      var cfg = loadExecutorConfig(name);
+      if (!cfg) { showToast('Конфиг не найден.'); return; }
+      cfg.revokeVersion = (cfg.revokeVersion || 0) + 1;
+      saveExecutorConfig(name, cfg);
+      var snippet = escHtml('REVOKED_VERSIONS["' + name + '"] = ' + cfg.revokeVersion + ';');
+      showToast('Версия повышена до ' + cfg.revokeVersion + '. Добавьте в index.html: ' + snippet);
       renderOwner();
     });
   });
@@ -407,8 +533,9 @@ function bindOwnerEvents() {
     el.addEventListener('click', function() {
       var name = this.getAttribute('data-link');
       var cfg = loadExecutorConfig(name);
-      if (!cfg) { showToast('Конфиг не найден.'); return; }
-      var url = generateExecutorUrl(cfg);
+      if (!cfg) { showToast('Конфиг не найден: ' + name); return; }
+      var url = generateExecutorUrl(cfg, name);
+      showToast('Генерация ссылки для: ' + name);
       showLinkDialog(url, name);
     });
   });
@@ -417,11 +544,12 @@ function bindOwnerEvents() {
   document.querySelectorAll('[data-adminlink]').forEach(function(el) {
     el.addEventListener('click', function() {
       var url = this.getAttribute('data-adminlink');
+      var aname = this.getAttribute('data-adminname') || '';
       var inp = document.createElement('input');
       inp.value = url;
       document.body.appendChild(inp);
       inp.select();
-      try { document.execCommand('copy'); showToast('Ссылка для входа скопирована.'); } catch(e) { showToast('Ошибка.'); }
+      try { document.execCommand('copy'); showToast('Ссылка для входа скопирована: ' + aname); } catch(e) { showToast('Ошибка копирования.'); }
       document.body.removeChild(inp);
     });
   });
@@ -432,13 +560,24 @@ function showLinkDialog(url, name) {
   var h = '<div class="card"><div class="card-title">Ссылка для ' + escHtml(name) + '</div>';
   h += '<div class="url-box"><input type="text" id="genUrl" value="' + escHtml(url) + '" readonly>';
   h += '<button class="btn btn-primary btn-sm" id="copyUrlBtn">Копировать</button></div>';
-  h += '<div class="qr-box"><img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(url) + '" alt="QR"></div>';
-  h += '<p class="text-muted text-center mt-8">QR-код генерируется автоматически. Сохраните его как картинку.</p>';
+  h += '<div class="qr-box"><div id="qrLink"></div></div>';
+  h += '<p class="text-muted text-center mt-8">QR-код генерируется на вашем устройстве. Сохраните его как картинку (ПКМ по QR → Сохранить).</p>';
   h += '</div>';
 
   var editor = document.getElementById('execEditor');
   editor.innerHTML = h;
   editor.classList.remove('hidden');
+
+  // Generate QR code client-side
+  try {
+    new QRCode(document.getElementById('qrLink'), {
+      text: url, width: 280, height: 280,
+      colorDark: '#000000', colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.L
+    });
+  } catch(e) {
+    document.getElementById('qrLink').innerHTML = '<p class="text-muted">Ошибка генерации QR: ' + escHtml(e.message) + '</p>';
+  }
 
   document.getElementById('copyUrlBtn').addEventListener('click', function() {
     var inp = document.getElementById('genUrl');
@@ -544,7 +683,7 @@ function renderExecutorEditor(name) {
     saveExecEditor(name, function() {
       var cfg2 = loadExecutorConfig(name);
       if (!cfg2) return;
-      var url = generateExecutorUrl(cfg2);
+      var url = generateExecutorUrl(cfg2, name);
       showLinkDialog(url, name);
     });
   });
@@ -721,7 +860,7 @@ function renderExecutorInlineEditor(name, cfg, container) {
     saveExecEditor(name, function() {
       var cfg2 = loadExecutorConfig(name);
       if (!cfg2) return;
-      var url = generateExecutorUrl(cfg2);
+      var url = generateExecutorUrl(cfg2, name);
       var resultDiv = document.getElementById('execLinkResult');
       var owner = loadOwnerContact();
       resultDiv.innerHTML = '';
@@ -729,9 +868,25 @@ function renderExecutorInlineEditor(name, cfg, container) {
       resultDiv.innerHTML = '<div class="card"><div class="card-title">Ваша ссылка для клиентов</div>';
       resultDiv.innerHTML += '<div class="url-box"><input type="text" id="execGenUrl" value="' + escHtml(url) + '" readonly>';
       resultDiv.innerHTML += '<button class="btn btn-primary btn-sm" id="execCopyUrl">Копировать</button></div>';
-      resultDiv.innerHTML += '<div class="qr-box"><img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(url) + '" alt="QR"></div>';
-      resultDiv.innerHTML += '<p class="text-muted text-center mt-8">По всем вопросам: ' + escHtml(owner.email) + ' | ' + escHtml(owner.telegram) + '</p>';
+      resultDiv.innerHTML += '<div class="qr-box"><div id="qrExecLink"></div></div>';
+      resultDiv.innerHTML += '<p class="text-muted text-center mt-8">QR-код на вашем устройстве. ПКМ по QR → Сохранить.</p>';
+      resultDiv.innerHTML += '<p class="text-muted text-center">По всем вопросам: ' + escHtml(owner.email) + ' | ' + escHtml(owner.telegram) + '</p>';
       resultDiv.innerHTML += '</div>';
+
+      // Generate QR code client-side
+      try {
+        var qrExecContainer = document.getElementById('qrExecLink');
+        if (qrExecContainer) {
+          new QRCode(qrExecContainer, {
+            text: url, width: 280, height: 280,
+            colorDark: '#000000', colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.L
+          });
+        }
+      } catch(e) {
+        var qrExecContainer = document.getElementById('qrExecLink');
+        if (qrExecContainer) qrExecContainer.innerHTML = '<p class="text-muted">Ошибка QR: ' + escHtml(e.message) + '</p>';
+      }
 
       document.getElementById('execCopyUrl').addEventListener('click', function() {
         var inp = document.getElementById('execGenUrl');
