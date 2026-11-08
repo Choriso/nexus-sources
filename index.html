@@ -6,121 +6,71 @@
 <title>Nexus — источники</title>
 <meta name="description" content="Авторитетные источники по теме прототипа рекомендательной системы подбора единомышленников на основе автоматического профилирования личности по текстовым данным.">
 <style>
-  :root{
-    --bg:#f6f6f7; --card:#ffffff; --text:#1c1c1e; --muted:#6b6b70;
-    --line:#e6e6ea; --accent:#6b4ee6; --accent-soft:#efeafe;
-  }
-  @media (prefers-color-scheme: dark){
-    :root{
-      --bg:#1b1b20; --card:#242629; --text:#dddcdb; --muted:#9a9aa2;
-      --line:#33353a; --accent:#9d86ff; --accent-soft:#2b2740;
-    }
-  }
-  *{box-sizing:border-box}
-  html{-webkit-text-size-adjust:100%}
   body{
-    margin:0; background:var(--bg); color:var(--text);
+    background:#ffffff;
+    color:#000000;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    line-height:1.55; -webkit-font-smoothing:antialiased;
+    line-height:1.55;
+    margin:0;
   }
-  .wrap{max-width:720px; margin:0 auto; padding:48px 20px 64px}
-  header{margin-bottom:36px}
-  h1{font-size:1.6rem; line-height:1.25; margin:0 0 .5rem; letter-spacing:-.01em}
-  .lead{color:var(--muted); margin:0 0 1.25rem; font-size:1rem}
-  .btn{
-    display:inline-flex; align-items:center; gap:.5rem;
-    background:var(--accent); color:#fff; text-decoration:none;
-    padding:.6rem 1rem; border-radius:999px; font-size:.95rem; font-weight:600;
-    transition:opacity .15s ease;
+  main{
+    max-width:720px;
+    margin:0 auto;
+    padding:40px 20px 64px;
   }
-  .btn:hover{opacity:.88}
-  section{margin:32px 0 0}
-  h2{
-    font-size:.75rem; text-transform:uppercase; letter-spacing:.08em;
-    color:var(--muted); font-weight:700; margin:0 0 12px;
-  }
-  ol{list-style:none; margin:0; padding:0; counter-reset:src}
-  li{
-    background:var(--card); border:1px solid var(--line); border-radius:12px;
-    padding:12px 14px 12px 46px; position:relative; margin-bottom:8px;
-  }
-  li::before{
-    counter-increment:src; content:counter(src);
-    position:absolute; left:12px; top:12px; width:22px; height:22px;
-    background:var(--accent-soft); color:var(--accent);
-    border-radius:6px; font-size:.75rem; font-weight:700;
-    display:flex; align-items:center; justify-content:center;
-  }
-  li a{color:inherit; text-decoration:none; display:block}
-  li a:hover .title{color:var(--accent)}
-  .title{font-weight:600}
-  .meta{color:var(--muted); font-size:.9rem}
-  footer{margin-top:40px; color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); padding-top:16px}
-  footer a{color:var(--accent); text-decoration:none}
+  h1{font-size:1.5rem; margin:0 0 8px;}
+  h2{font-size:1.05rem; margin:28px 0 8px;}
+  p{margin:0 0 12px;}
+  ol{margin:0; padding-left:1.6em;}
+  li{margin:6px 0;}
+  a{color:#000; text-decoration:underline;}
 </style>
 </head>
 <body>
-<div class="wrap">
+<main>
 
-  <header>
-    <h1>Nexus — источники</h1>
-    <p class="lead">Прототип рекомендательной системы подбора единомышленников на основе автоматического профилирования личности по текстовым данным.</p>
-    <a class="btn" href="https://github.com/Choriso/Nexus">Проект Nexus на GitHub →</a>
-  </header>
+  <h1>Nexus — источники</h1>
+  <p>Прототип рекомендательной системы подбора единомышленников на основе автоматического профилирования личности по текстовым данным.</p>
+  <p>Проект Nexus на GitHub: <a href="https://github.com/Choriso/Nexus">github.com/Choriso/Nexus</a></p>
 
-  <section>
-    <h2>Рекомендательные системы</h2>
-    <ol>
-      <li><a href="https://doi.org/10.1007/978-1-4899-7637-6"><span class="title">Recommender Systems Handbook</span><span class="meta"> Ricci F., Rokach L., Shapira B. (eds.) · Springer, 2015</span></a></li>
-      <li><a href="https://doi.org/10.1145/245108.245121"><span class="title">Recommender systems</span><span class="meta"> Resnick P., Varian H. R. · Communications of the ACM, 1997</span></a></li>
-      <li><a href="https://doi.org/10.1016/j.knosys.2013.03.012"><span class="title">Recommender systems survey</span><span class="meta"> Bobadilla J. et al. · Knowledge-Based Systems, 2013</span></a></li>
-      <li><a href="https://doi.org/10.1145/3285029"><span class="title">Deep Learning Based Recommender System</span><span class="meta"> Zhang S. et al. · ACM Computing Surveys, 2019</span></a></li>
-      <li><a href="https://doi.org/10.1145/3298689.3347058"><span class="title">Are we really making much progress?</span><span class="meta"> Ferrari Dacrema M. et al. · RecSys, 2019</span></a></li>
-      <li><a href="https://doi.org/10.1109/MC.2009.263"><span class="title">Matrix Factorization Techniques for Recommender Systems</span><span class="meta"> Koren Y., Bell R., Volinsky C. · Computer, 2009</span></a></li>
-    </ol>
-  </section>
+  <h2>Рекомендательные системы</h2>
+  <ol>
+    <li><a href="https://doi.org/10.1007/978-1-4899-7637-6">Ricci F., Rokach L., Shapira B. (eds.). Recommender Systems Handbook. Springer, 2015.</a></li>
+    <li><a href="https://doi.org/10.1145/245108.245121">Resnick P., Varian H. R. Recommender systems. Communications of the ACM, 1997.</a></li>
+    <li><a href="https://doi.org/10.1016/j.knosys.2013.03.012">Bobadilla J. et al. Recommender systems survey. Knowledge-Based Systems, 2013.</a></li>
+    <li><a href="https://doi.org/10.1145/3285029">Zhang S. et al. Deep Learning Based Recommender System. ACM Computing Surveys, 2019.</a></li>
+    <li><a href="https://doi.org/10.1145/3298689.3347058">Ferrari Dacrema M. et al. Are we really making much progress? RecSys, 2019.</a></li>
+    <li><a href="https://doi.org/10.1109/MC.2009.263">Koren Y., Bell R., Volinsky C. Matrix Factorization Techniques for Recommender Systems. Computer, 2009.</a></li>
+  </ol>
 
-  <section>
-    <h2>Профилирование личности по тексту и цифровым следам</h2>
-    <ol>
-      <li><a href="https://doi.org/10.1073/pnas.1218772110"><span class="title">Private traits and attributes are predictable from digital records</span><span class="meta"> Kosinski M. et al. · PNAS, 2013</span></a></li>
-      <li><a href="https://doi.org/10.1073/pnas.1418680112"><span class="title">Computer-based personality judgments are more accurate than those made by humans</span><span class="meta"> Youyou W. et al. · PNAS, 2015</span></a></li>
-      <li><a href="https://doi.org/10.1037/pspp0000020"><span class="title">Automatic personality assessment through social media language</span><span class="meta"> Park G. et al. · JPSP, 2015</span></a></li>
-      <li><a href="https://doi.org/10.1371/journal.pone.0073791"><span class="title">Personality, Gender, and Age in the Language of Social Media</span><span class="meta"> Schwartz H. A. et al. · PLoS ONE, 2013</span></a></li>
-      <li><a href="https://doi.org/10.1177/0261927X09351676"><span class="title">The Psychological Meaning of Words: LIWC</span><span class="meta"> Tausczik Y. R., Pennebaker J. W. · JLSP, 2010</span></a></li>
-    </ol>
-  </section>
+  <h2>Профилирование личности по тексту и цифровым следам</h2>
+  <ol>
+    <li><a href="https://doi.org/10.1073/pnas.1218772110">Kosinski M. et al. Private traits and attributes are predictable from digital records. PNAS, 2013.</a></li>
+    <li><a href="https://doi.org/10.1073/pnas.1418680112">Youyou W. et al. Computer-based personality judgments are more accurate than those made by humans. PNAS, 2015.</a></li>
+    <li><a href="https://doi.org/10.1037/pspp0000020">Park G. et al. Automatic personality assessment through social media language. JPSP, 2015.</a></li>
+    <li><a href="https://doi.org/10.1371/journal.pone.0073791">Schwartz H. A. et al. Personality, Gender, and Age in the Language of Social Media. PLoS ONE, 2013.</a></li>
+    <li><a href="https://doi.org/10.1177/0261927X09351676">Tausczik Y. R., Pennebaker J. W. The Psychological Meaning of Words: LIWC. JLSP, 2010.</a></li>
+  </ol>
 
-  <section>
-    <h2>Модели личности и ценности (OCEAN, Шварц, MBTI)</h2>
-    <ol>
-      <li><a href="https://doi.org/10.1037/0022-3514.52.1.81"><span class="title">Validation of the five-factor model of personality</span><span class="meta"> McCrae R. R., Costa P. T. · JPSP, 1987</span></a></li>
-      <li><a href="https://doi.org/10.1016/S0065-2601(08)60281-6"><span class="title">Universals in the Content and Structure of Values</span><span class="meta"> Schwartz S. H. · Advances in Experimental Social Psychology, 1992</span></a></li>
-      <li><a href="https://doi.org/10.1037/a0029393"><span class="title">Refining the theory of basic individual values</span><span class="meta"> Schwartz S. H. et al. · JPSP, 2012</span></a></li>
-      <li><a href="https://doi.org/10.1037/1065-9293.57.3.210"><span class="title">Cautionary comments regarding the Myers-Briggs Type Indicator</span><span class="meta"> Pittenger D. J. · Consulting Psychology Journal, 2005</span></a></li>
-    </ol>
-  </section>
+  <h2>Модели личности и ценности (OCEAN, Шварц, MBTI)</h2>
+  <ol>
+    <li><a href="https://doi.org/10.1037/0022-3514.52.1.81">McCrae R. R., Costa P. T. Validation of the five-factor model of personality. JPSP, 1987.</a></li>
+    <li><a href="https://doi.org/10.1016/S0065-2601(08)60281-6">Schwartz S. H. Universals in the Content and Structure of Values. Advances in Experimental Social Psychology, 1992.</a></li>
+    <li><a href="https://doi.org/10.1037/a0029393">Schwartz S. H. et al. Refining the theory of basic individual values. JPSP, 2012.</a></li>
+    <li><a href="https://doi.org/10.1037/1065-9293.57.3.210">Pittenger D. J. Cautionary comments regarding the Myers-Briggs Type Indicator. Consulting Psychology Journal, 2005.</a></li>
+  </ol>
 
-  <section>
-    <h2>Текстовые эмбеддинги</h2>
-    <ol>
-      <li><a href="https://doi.org/10.18653/v1/D19-1410"><span class="title">Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks</span><span class="meta"> Reimers N., Gurevych I. · EMNLP-IJCNLP, 2019</span></a></li>
-      <li><a href="https://www.sbert.net"><span class="title">Sentence-Transformers Documentation</span><span class="meta"> sbert.net</span></a></li>
-    </ol>
-  </section>
+  <h2>Текстовые эмбеддинги</h2>
+  <ol>
+    <li><a href="https://doi.org/10.18653/v1/D19-1410">Reimers N., Gurevych I. Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks. EMNLP-IJCNLP, 2019.</a></li>
+    <li><a href="https://www.sbert.net">Sentence-Transformers Documentation. sbert.net</a></li>
+  </ol>
 
-  <section>
-    <h2>Русскоязычный обзор</h2>
-    <ol>
-      <li><a href="https://cyberleninka.ru/article/n/rekomendatelnye-sistemy-na-osnove-sessiy-modeli-i-zadachi"><span class="title">Рекомендательные системы на основе сессий — модели и задачи</span><span class="meta"> КиберЛенинка</span></a></li>
-    </ol>
-  </section>
+  <h2>Русскоязычный обзор</h2>
+  <ol>
+    <li><a href="https://cyberleninka.ru/article/n/rekomendatelnye-sistemy-na-osnove-sessiy-modeli-i-zadachi">Рекомендательные системы на основе сессий — модели и задачи. КиберЛенинка.</a></li>
+  </ol>
 
-  <footer>
-    Все ссылки ведут на официальные страницы издателей (DOI).<br>
-    Исходный код проекта — <a href="https://github.com/Choriso/Nexus">github.com/Choriso/Nexus</a>.
-  </footer>
-
-</div>
+</main>
 </body>
 </html>
