@@ -1,440 +1,126 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>3D Печать — Калькулятор заказа</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nexus — источники</title>
+<meta name="description" content="Авторитетные источники по теме прототипа рекомендательной системы подбора единомышленников на основе автоматического профилирования личности по текстовым данным.">
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#ffffff;--bg-card:#f6f8fa;--bg-input:#ffffff;--text:#1a1a1a;--text-secondary:#6b7280;--text-muted:#9ca3af;--border:#e0e4e8;--radius:12px;--radius-sm:8px;--font:-apple-system,'Segoe UI',system-ui,sans-serif}
-html{font-size:16px}
-body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.5;padding:24px 16px 48px;display:flex;flex-direction:column;align-items:center}
-.container{max-width:720px;width:100%}
-header{text-align:center;padding:20px 0 6px}
-header h1{font-size:1.6rem;font-weight:700;letter-spacing:-.02em}
-header p{margin-top:3px;font-size:.9rem;color:var(--text-secondary)}
-
-.executor-info{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;margin:12px 0;display:flex;flex-wrap:wrap;gap:10px 20px;font-size:.85rem}
-.executor-info .l{color:var(--text-secondary);font-size:.78rem;text-transform:uppercase;letter-spacing:.03em}
-.executor-info .v{font-weight:500}
-.executor-info a{color:#2563eb;text-decoration:none}
-.executor-info a:hover{text-decoration:underline}
-
-.notice{background:#fff8e6;border:1px solid #f0d78a;border-radius:var(--radius-sm);padding:10px 14px;margin:14px 0;font-size:.85rem;color:#8a6d1b;text-align:center}
-.info{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;margin:14px 0 18px;font-size:.85rem;color:var(--text-secondary);line-height:1.6}
-.info strong{color:var(--text)}
-.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px 20px;margin-bottom:16px}
-.card-title{font-size:1.05rem;font-weight:600;margin-bottom:18px}
-.field{margin-bottom:16px}
-.field:last-child{margin-bottom:0}
-.field label,.field .label-text{display:block;font-size:.82rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px}
-.field input[type="number"],.field input[type="text"],.field select,.field textarea{width:100%;padding:10px 12px;font-size:.95rem;font-family:var(--font);background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);outline:none;transition:border-color .2s}
-.field input:focus,.field select:focus,.field textarea:focus{border-color:#000}
-.field input[type="number"]{-moz-appearance:textfield}
-.field input[type="number"]::-webkit-inner-spin-button,.field input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
-.field textarea{resize:vertical;min-height:64px}
-.field select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' fill='%236b7280'%3E%3Cpath d='M1 1l4.5 5L10 1'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px}
-.dims-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px}
-.dims-row .field{margin-bottom:0}
-.dims-row .field label{font-size:.75rem;margin-bottom:2px}
-.calc-weight{margin-top:8px;font-size:.88rem;color:var(--text-secondary)}
-.radio-group{display:flex;gap:10px;margin-top:4px}
-.radio-group .radio-item{flex:1}
-.radio-group input[type="radio"]{display:none}
-.radio-group .radio-label{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 12px;font-size:.9rem;font-weight:500;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;color:var(--text-secondary);user-select:none;text-align:center}
-.radio-group input[type="radio"]:checked+.radio-label{border-color:#000;color:#000;background:#f0f0f0}
-.radio-group .radio-label:hover{border-color:#888}
-.checkbox-field{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:.9rem;user-select:none;color:var(--text)}
-.checkbox-field input[type="checkbox"]{display:none}
-.checkbox-field .checkmark{width:20px;height:20px;flex-shrink:0;border:2px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;transition:all .2s}
-.checkbox-field input:checked+.checkmark{background:#000;border-color:#000}
-.checkbox-field input:checked+.checkmark::after{content:"";width:6px;height:10px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg);margin-top:-2px}
-
-/* Detailed description block */
-.detail{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-top:6px;font-size:.82rem;color:var(--text-secondary);line-height:1.55}
-.detail strong{color:var(--text)}
-.detail .pros{color:#16a34a;font-weight:500}
-.detail .cons{color:#dc2626;font-weight:500}
-.detail .use{color:#2563eb;font-weight:500}
-.detail p{margin-bottom:4px}
-.detail p:last-child{margin-bottom:0}
-.detail ul{margin:4px 0 4px 16px;list-style:none}
-.detail ul li::before{content:"— ";color:var(--text-muted)}
-
-.results{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.result-item{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px 14px;text-align:center}
-.result-item .label{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-secondary);margin-bottom:4px}
-.result-item .value{font-size:1.5rem;font-weight:700}
-.result-item .value.price{color:#000}
-.result-item .value.time{color:#2563eb}
-.btn{width:100%;padding:14px;font-size:1rem;font-weight:600;font-family:var(--font);background:#000;color:#fff;border:none;border-radius:10px;cursor:pointer;transition:background .2s,transform .1s;margin-top:20px}
-.btn:hover{background:#333}
-.btn:active{transform:scale(.98)}
-footer{margin-top:32px;font-size:.78rem;color:var(--text-muted);text-align:center}
-
-@media(max-width:640px){body{padding:16px 10px 32px}header h1{font-size:1.35rem}.card{padding:18px 14px}.results{grid-template-columns:1fr}.radio-group{flex-direction:column}.dims-row{grid-template-columns:1fr}.executor-info{flex-direction:column;gap:6px}}
+  :root{
+    --bg:#f6f6f7; --card:#ffffff; --text:#1c1c1e; --muted:#6b6b70;
+    --line:#e6e6ea; --accent:#6b4ee6; --accent-soft:#efeafe;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#1b1b20; --card:#242629; --text:#dddcdb; --muted:#9a9aa2;
+      --line:#33353a; --accent:#9d86ff; --accent-soft:#2b2740;
+    }
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.55; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:720px; margin:0 auto; padding:48px 20px 64px}
+  header{margin-bottom:36px}
+  h1{font-size:1.6rem; line-height:1.25; margin:0 0 .5rem; letter-spacing:-.01em}
+  .lead{color:var(--muted); margin:0 0 1.25rem; font-size:1rem}
+  .btn{
+    display:inline-flex; align-items:center; gap:.5rem;
+    background:var(--accent); color:#fff; text-decoration:none;
+    padding:.6rem 1rem; border-radius:999px; font-size:.95rem; font-weight:600;
+    transition:opacity .15s ease;
+  }
+  .btn:hover{opacity:.88}
+  section{margin:32px 0 0}
+  h2{
+    font-size:.75rem; text-transform:uppercase; letter-spacing:.08em;
+    color:var(--muted); font-weight:700; margin:0 0 12px;
+  }
+  ol{list-style:none; margin:0; padding:0; counter-reset:src}
+  li{
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:12px 14px 12px 46px; position:relative; margin-bottom:8px;
+  }
+  li::before{
+    counter-increment:src; content:counter(src);
+    position:absolute; left:12px; top:12px; width:22px; height:22px;
+    background:var(--accent-soft); color:var(--accent);
+    border-radius:6px; font-size:.75rem; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+  }
+  li a{color:inherit; text-decoration:none; display:block}
+  li a:hover .title{color:var(--accent)}
+  .title{font-weight:600}
+  .meta{color:var(--muted); font-size:.9rem}
+  footer{margin-top:40px; color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); padding-top:16px}
+  footer a{color:var(--accent); text-decoration:none}
 </style>
 </head>
 <body>
-<div class="container" id="app"></div>
-<footer>Нажмите &laquo;Сформировать заказ&raquo;, чтобы скачать .txt-файл для отправки исполнителю.</footer>
+<div class="wrap">
 
-<script>
-// ===== REVOKED VERSIONS =====
-// Карта отозванных версий исполнителей.
-// Ключ — ID исполнителя, значение — версия конфига, с которой ссылка считается НЕДЕЙСТВИТЕЛЬНОЙ.
-// Пример: { "test": 2 } — ссылки с v < 2 будут показывать ошибку.
-// После отзыва исполнителя администратор должен обновить эту карту и перезалить сайт.
-var REVOKED_VERSIONS = {};
+  <header>
+    <h1>Nexus — источники</h1>
+    <p class="lead">Прототип рекомендательной системы подбора единомышленников на основе автоматического профилирования личности по текстовым данным.</p>
+    <a class="btn" href="https://github.com/Choriso/Nexus">Проект Nexus на GitHub →</a>
+  </header>
 
-// ===== BASE CONFIG =====
-var baseConfig = {
-  technologies: {
-    fdm: { enabled: true, label: 'FDM',
-      materials: {
-        pla: { enabled: true, label: 'PLA', density: 1.24, pricePerGram: 5, timePerGram: 8, colors: ['Белый','Чёрный','Красный','Синий','Зелёный','Жёлтый','Оранжевый','Серый'] },
-        petg: { enabled: true, label: 'PETG', density: 1.27, pricePerGram: 7, timePerGram: 9, colors: ['Белый','Чёрный','Серый','Прозрачный','Синий','Красный'] },
-        abs: { enabled: true, label: 'ABS', density: 1.04, pricePerGram: 8, timePerGram: 10, colors: ['Белый','Чёрный','Серый'] },
-        tpu: { enabled: false, label: 'TPU (Flex)', density: 1.21, pricePerGram: 12, timePerGram: 14, colors: ['Чёрный','Белый'] },
-        nylon: { enabled: false, label: 'Nylon (PA)', density: 1.01, pricePerGram: 20, timePerGram: 8, colors: ['Белый','Чёрный'] },
-        asa: { enabled: false, label: 'ASA', density: 1.07, pricePerGram: 10, timePerGram: 11, colors: ['Белый','Чёрный','Серый'] },
-        pc: { enabled: false, label: 'Polycarbonate', density: 1.2, pricePerGram: 15, timePerGram: 12, colors: ['Прозрачный','Чёрный'] }
-      }
-    },
-    sla: { enabled: true, label: 'SLA',
-      materials: {
-        standard_resin: { enabled: true, label: 'Standard Resin', density: 1.15, pricePerGram: 15, timePerGram: 5, colors: ['Прозрачный','Белый','Серый','Чёрный'] },
-        tough_resin: { enabled: false, label: 'Tough Resin', density: 1.18, pricePerGram: 20, timePerGram: 5, colors: ['Чёрный','Серый'] },
-        flexible_resin: { enabled: false, label: 'Flexible Resin', density: 1.12, pricePerGram: 22, timePerGram: 5, colors: ['Прозрачный','Чёрный'] },
-        castable_resin: { enabled: false, label: 'Castable Resin', density: 1.1, pricePerGram: 25, timePerGram: 6, colors: ['Фиолетовый','Синий'] },
-        dental_resin: { enabled: false, label: 'Dental Resin', density: 1.17, pricePerGram: 30, timePerGram: 5, colors: ['Белый','Прозрачный'] }
-      }
-    },
-    sls: { enabled: false, label: 'SLS (Nylon Powder)',
-      materials: {
-        pa12: { enabled: true, label: 'PA12 Nylon', density: 1.01, pricePerGram: 25, timePerGram: 3, colors: ['Белый','Чёрный'] },
-        pa11: { enabled: false, label: 'PA11 Nylon', density: 1.03, pricePerGram: 30, timePerGram: 3, colors: ['Белый'] },
-        tpu_sls: { enabled: false, label: 'TPU (SLS)', density: 1.2, pricePerGram: 35, timePerGram: 3, colors: ['Чёрный'] }
-      }
-    }
-  },
-  quality: {
-    '0.12': { label: '0.12 mm - High', priceMultiplier: 1.5, timeMultiplier: 1.6 },
-    '0.2':  { label: '0.20 mm - Standard', priceMultiplier: 1.0, timeMultiplier: 1.0 },
-    '0.28': { label: '0.28 mm - Draft', priceMultiplier: 0.8, timeMultiplier: 0.7 }
-  },
-  infill: {
-    '15':  { label: '15% - Light', priceMultiplier: 0.85, timeMultiplier: 0.9 },
-    '50':  { label: '50% - Standard', priceMultiplier: 1.0, timeMultiplier: 1.0 },
-    '100': { label: '100% - Solid', priceMultiplier: 1.3, timeMultiplier: 1.4 }
-  },
-  postProcessing: { fdm: 200, sla: 300 },
-  minPrice: 500, minTime: 30
-};
+  <section>
+    <h2>Рекомендательные системы</h2>
+    <ol>
+      <li><a href="https://doi.org/10.1007/978-1-4899-7637-6"><span class="title">Recommender Systems Handbook</span><span class="meta"> Ricci F., Rokach L., Shapira B. (eds.) · Springer, 2015</span></a></li>
+      <li><a href="https://doi.org/10.1145/245108.245121"><span class="title">Recommender systems</span><span class="meta"> Resnick P., Varian H. R. · Communications of the ACM, 1997</span></a></li>
+      <li><a href="https://doi.org/10.1016/j.knosys.2013.03.012"><span class="title">Recommender systems survey</span><span class="meta"> Bobadilla J. et al. · Knowledge-Based Systems, 2013</span></a></li>
+      <li><a href="https://doi.org/10.1145/3285029"><span class="title">Deep Learning Based Recommender System</span><span class="meta"> Zhang S. et al. · ACM Computing Surveys, 2019</span></a></li>
+      <li><a href="https://doi.org/10.1145/3298689.3347058"><span class="title">Are we really making much progress?</span><span class="meta"> Ferrari Dacrema M. et al. · RecSys, 2019</span></a></li>
+      <li><a href="https://doi.org/10.1109/MC.2009.263"><span class="title">Matrix Factorization Techniques for Recommender Systems</span><span class="meta"> Koren Y., Bell R., Volinsky C. · Computer, 2009</span></a></li>
+    </ol>
+  </section>
 
-// ===== URL PARAMS =====
-function getUrlParams() {
-  var p = {}, s = window.location.search.substring(1);
-  if (!s) return p;
-  s.split('&').forEach(function(pair) {
-    var parts = pair.split('=');
-    if (parts.length === 2) p[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1]);
-  });
-  return p;
-}
+  <section>
+    <h2>Профилирование личности по тексту и цифровым следам</h2>
+    <ol>
+      <li><a href="https://doi.org/10.1073/pnas.1218772110"><span class="title">Private traits and attributes are predictable from digital records</span><span class="meta"> Kosinski M. et al. · PNAS, 2013</span></a></li>
+      <li><a href="https://doi.org/10.1073/pnas.1418680112"><span class="title">Computer-based personality judgments are more accurate than those made by humans</span><span class="meta"> Youyou W. et al. · PNAS, 2015</span></a></li>
+      <li><a href="https://doi.org/10.1037/pspp0000020"><span class="title">Automatic personality assessment through social media language</span><span class="meta"> Park G. et al. · JPSP, 2015</span></a></li>
+      <li><a href="https://doi.org/10.1371/journal.pone.0073791"><span class="title">Personality, Gender, and Age in the Language of Social Media</span><span class="meta"> Schwartz H. A. et al. · PLoS ONE, 2013</span></a></li>
+      <li><a href="https://doi.org/10.1177/0261927X09351676"><span class="title">The Psychological Meaning of Words: LIWC</span><span class="meta"> Tausczik Y. R., Pennebaker J. W. · JLSP, 2010</span></a></li>
+    </ol>
+  </section>
 
-// Рекурсивно накладывает diff поверх base
-function configApply(base, diff) {
-  if (diff === null || diff === undefined || typeof diff !== 'object' || Array.isArray(diff)) return diff;
-  var out = JSON.parse(JSON.stringify(base));
-  var keys = Object.keys(diff);
-  for (var i = 0; i < keys.length; i++) {
-    var k = keys[i];
-    var dv = diff[k];
-    if (dv === null || dv === undefined) continue;
-    if (typeof dv !== 'object' || Array.isArray(dv)) { out[k] = dv; continue; }
-    var bv = out[k];
-    if (bv === undefined) { out[k] = JSON.parse(JSON.stringify(dv)); continue; }
-    out[k] = configApply(bv, dv);
-  }
-  return out;
-}
+  <section>
+    <h2>Модели личности и ценности (OCEAN, Шварц, MBTI)</h2>
+    <ol>
+      <li><a href="https://doi.org/10.1037/0022-3514.52.1.81"><span class="title">Validation of the five-factor model of personality</span><span class="meta"> McCrae R. R., Costa P. T. · JPSP, 1987</span></a></li>
+      <li><a href="https://doi.org/10.1016/S0065-2601(08)60281-6"><span class="title">Universals in the Content and Structure of Values</span><span class="meta"> Schwartz S. H. · Advances in Experimental Social Psychology, 1992</span></a></li>
+      <li><a href="https://doi.org/10.1037/a0029393"><span class="title">Refining the theory of basic individual values</span><span class="meta"> Schwartz S. H. et al. · JPSP, 2012</span></a></li>
+      <li><a href="https://doi.org/10.1037/1065-9293.57.3.210"><span class="title">Cautionary comments regarding the Myers-Briggs Type Indicator</span><span class="meta"> Pittenger D. J. · Consulting Psychology Journal, 2005</span></a></li>
+    </ol>
+  </section>
 
-// ===== LOAD CONFIG =====
-function loadConfig() {
-  // Проверка отзыва: если ссылка содержит ?e=...&v=...
-  var params = getUrlParams();
-  var execName = params.e || '';
-  var execVer = parseInt(params.v || '-1', 10);
-  if (execName && execVer >= 0 && REVOKED_VERSIONS[execName] !== undefined && execVer < REVOKED_VERSIONS[execName]) {
-    return { _revoked: true, _executor: execName };
-  }
+  <section>
+    <h2>Текстовые эмбеддинги</h2>
+    <ol>
+      <li><a href="https://doi.org/10.18653/v1/D19-1410"><span class="title">Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks</span><span class="meta"> Reimers N., Gurevych I. · EMNLP-IJCNLP, 2019</span></a></li>
+      <li><a href="https://www.sbert.net"><span class="title">Sentence-Transformers Documentation</span><span class="meta"> sbert.net</span></a></li>
+    </ol>
+  </section>
 
-  var hash = window.location.hash;
-  if (hash && hash.indexOf('#config=') === 0) {
-    try {
-      var encoded = hash.substring(8);
-      var binary = atob(encoded);
-      var bytes = new Uint8Array(binary.length);
-      for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-      var diff = JSON.parse(new TextDecoder('utf-8').decode(bytes));
-      return configApply(baseConfig, diff);
-    } catch(e) {}
-  }
-  try {
-    var saved = localStorage.getItem('3dpc_cfg_admin');
-    if (saved) return JSON.parse(saved);
-  } catch(e) {}
-  return JSON.parse(JSON.stringify(baseConfig));
-}
+  <section>
+    <h2>Русскоязычный обзор</h2>
+    <ol>
+      <li><a href="https://cyberleninka.ru/article/n/rekomendatelnye-sistemy-na-osnove-sessiy-modeli-i-zadachi"><span class="title">Рекомендательные системы на основе сессий — модели и задачи</span><span class="meta"> КиберЛенинка</span></a></li>
+    </ol>
+  </section>
 
-function esc(s){if(!s)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+  <footer>
+    Все ссылки ведут на официальные страницы издателей (DOI).<br>
+    Исходный код проекта — <a href="https://github.com/Choriso/Nexus">github.com/Choriso/Nexus</a>.
+  </footer>
 
-// ===== DESCRIPTIONS =====
-var desc = {
-  tech: {
-    fdm: '<strong>FDM</strong> — послойное наплавление пластиковой нитью.<br><span class="pros">+ Доступная цена, огромный выбор материалов, прочные детали</span><br><span class="cons">- Видны слои, требуется постобработка для гладкой поверхности</span><br><span class="use">Для: прототипов, функциональных деталей, крупных изделий, механизмов</span>',
-    sla: '<strong>SLA</strong> — фотополимерная печать жидкой смолой, отверждаемой лазером или УФ-светом.<br><span class="pros">+ Идеально гладкая поверхность, высокая детализация, точные размеры</span><br><span class="cons">- Хрупкость, требуется промывка и засветка после печати, дороже FDM</span><br><span class="use">Для: миниатюр, ювелирных изделий, пресс-форм, моделей с высокой детализацией</span>',
-    sls: '<strong>SLS</strong> — селективное лазерное спекание нейлонового порошка.<br><span class="pros">+ Высокая прочность, не требуются поддержки, термостойкость, износостойкость</span><br><span class="cons">- Шероховатая поверхность, высокая цена</span><br><span class="use">Для: функциональных прототипов, шарнирных механизмов, конечных изделий</span>'
-  },
-  mat: {
-    pla: '<strong>PLA</strong> — полимолочная кислота, биоразлагаемый пластик на основе кукурузы.<br><span class="pros">+ Без запаха, легко печатать, доступная цена, много цветов</span><br><span class="cons">- Низкая термостойкость (до 55°C), хрупкий, боится ультрафиолета</span><br><span class="use">Для: декора, прототипов, игрушек, органайзеров, ваз</span>',
-    petg: '<strong>PETG</strong> — гликолевый полиэтилентерефталат, ударопрочная версия обычного пластика бутылок.<br><span class="pros">+ Прочный, гибкий, устойчив к химии и ударам, термостойкость до 80°C</span><br><span class="cons">- Гигроскопичен (требует сушки перед печатью), может тянуться</span><br><span class="use">Для: функциональных деталей, механизмов, емкостей, деталей на улицу</span>',
-    abs: '<strong>ABS</strong> — акрилонитрилбутадиенстирол, инженерный пластик.<br><span class="pros">+ Термостойкий (до 100°C), прочный, можно обрабатывать ацетоном для глянца</span><br><span class="cons">- Требует закрытой камеры, запах при печати, подвержен усадке и трещинам</span><br><span class="use">Для: технических прототипов, деталей для автомобилей, корпусов электроники</span>',
-    tpu: '<strong>TPU</strong> — термопластичный полиуретан, гибкий материал.<br><span class="pros">+ Эластичный, ударостойкий, можно гнуть и сжимать</span><br><span class="cons">- Сложно печатать (требует прямой подачи), низкая скорость</span><br><span class="use">Для: уплотнителей, чехлов, амортизирующих деталей, накладок</span>',
-    nylon: '<strong>Nylon (PA)</strong> — полиамид, прочный инженерный пластик.<br><span class="pros">+ Очень прочный, износостойкий, гибкий, термостойкий</span><br><span class="cons">- Сильно впитывает влагу, требует высоких температур печати, дорогой</span><br><span class="use">Для: шестеренок, функциональных механизмов, подшипников скольжения</span>',
-    asa: '<strong>ASA</strong> — акрилонитрил-стирол-акрилат, аналог ABS с улучшенной устойчивостью к УФ.<br><span class="pros">+ Устойчив к солнцу и погоде, термостойкий, хороший внешний вид</span><br><span class="cons">- Требует закрытой камеры, запах при печати</span><br><span class="use">Для: уличных изделий, автозапчастей, садовой техники</span>',
-    pc: '<strong>Polycarbonate</strong> — поликарбонат, сверхпрочный инженерный пластик.<br><span class="pros">+ Очень прочный, термостойкий до 110°C, прозрачный</span><br><span class="cons">- Требует очень высокой температуры печати, сложно печатать, дорогой</span><br><span class="use">Для: инженерных деталей, защитных кожухов, прозрачных элементов</span>',
-    standard_resin: '<strong>Standard Resin</strong> — стандартная фотополимерная смола.<br><span class="pros">+ Гладкая поверхность, высокая детализация, точные размеры</span><br><span class="cons">- Хрупкий, не для механических нагрузок, боится УФ</span><br><span class="use">Для: миниатюр, статуэток, моделей, ювелирных мастер-моделей</span>',
-    tough_resin: '<strong>Tough Resin</strong> — прочная смола с повышенной ударной вязкостью.<br><span class="pros">+ Значительно прочнее стандартной, подходит для нагрузок</span><br><span class="cons">- Дороже стандартной смолы</span><br><span class="use">Для: функциональных прототипов, деталей механизмов</span>',
-    flexible_resin: '<strong>Flexible Resin</strong> — эластичная смола.<br><span class="pros">+ Гнется и сжимается, возвращает форму</span><br><span class="cons">- Сложнее постобработка, дороже</span><br><span class="use">Для: уплотнителей, гибких деталей, эргономичных ручек</span>',
-    castable_resin: '<strong>Castable Resin</strong> — выжигаемая смола для литья.<br><span class="pros">+ Выгорает без остатка, идеальная гладкость</span><br><span class="cons">- Дорого, хрупкий до выжигания</span><br><span class="use">Для: литья металла (ювелирка, зубопротезирование)</span>',
-    dental_resin: '<strong>Dental Resin</strong> — стоматологическая смола.<br><span class="pros">+ Биосовместимый, высокая точность, сертифицированный</span><br><span class="cons">- Дорогой, требует специальной постобработки</span><br><span class="use">Для: зубных моделей, хирургических шаблонов, капп</span>',
-    pa12: '<strong>PA12 Nylon</strong> — нейлон для SLS-печати.<br><span class="pros">+ Прочный, износостойкий, не требует поддержек, термостойкий</span><br><span class="cons">- Шероховатая поверхность (матовый финиш)</span><br><span class="use">Для: функциональных деталей, механизмов, конечных изделий</span>',
-    pa11: '<strong>PA11 Nylon</strong> — био-нейлон для SLS, более гибкий чем PA12.<br><span class="pros">+ Более гибкий и ударопрочный чем PA12, био-сырье</span><br><span class="cons">- Дороже PA12</span><br><span class="use">Для: деталей требующих гибкости, спортивных изделий</span>',
-    tpu_sls: '<strong>TPU (SLS)</strong> — гибкий порошковый материал для SLS.<br><span class="pros">+ Эластичный, прочный, не требует поддержек</span><br><span class="cons">- Дорогой</span><br><span class="use">Для: уплотнителей, амортизаторов, гибких каналов</span>'
-  },
-  quality: {
-    '0.12': '<strong>0.12 mm — высокое качество.</strong> Слои почти не видны, гладкая поверхность.<br><span class="pros">+ Максимальная детализация, минимальная постобработка</span><br><span class="cons">- Печать в 1.5x дольше и дороже стандарта</span><br><span class="use">Для: финальных моделей, миниатюр, презентационных образцов</span>',
-    '0.2': '<strong>0.20 mm — стандартное качество.</strong> Оптимальный баланс между скоростью и качеством.<br><span class="pros">+ Быстрая печать, приемлемое качество, умеренная цена</span><br><span class="cons">- Слои заметны при ближайшем рассмотрении</span><br><span class="use">Для: большинства задач, прототипов, функциональных деталей</span>',
-    '0.28': '<strong>0.28 mm — черновой режим.</strong> Быстрая печать с грубой поверхностью.<br><span class="pros">+ Самая быстрая и дешевая печать</span><br><span class="cons">- Грубая поверхность, явно видны слои</span><br><span class="use">Для: черновых прототипов, тестовых деталей, нелицевых элементов</span>'
-  },
-  infill: {
-    '15': '<strong>15% — экономичное заполнение.</strong> Внутри детали преимущественно пустота.<br><span class="pros">+ Легкая деталь, минимальный расход материала, низкая цена</span><br><span class="cons">- Низкая прочность, может треснуть под нагрузкой</span><br><span class="use">Для: декоративных моделей, ваз, фигурок, элементов без нагрузок</span>',
-    '50': '<strong>50% — стандартное заполнение.</strong> Золотая середина прочности и веса.<br><span class="pros">+ Хорошая прочность, умеренный расход, держит нагрузку</span><br><span class="cons">- Выше вес и цена чем 15%</span><br><span class="use">Для: функциональных деталей, механизмов, корпусов, креплений</span>',
-    '100': '<strong>100% — монолитная деталь.</strong> Полностью заполненный пластик внутри.<br><span class="pros">+ Максимальная прочность, можно сверлить и нарезать резьбу</span><br><span class="cons">- Тяжелый, дорогой, долгая печать, большой расход пластика</span><br><span class="use">Для: нагруженных деталей, инструментов, шестеренок, держателей</span>'
-  },
-  post: 'Снятие поддержек, шлифовка поверхности, шпаклевка, грунтовка, покраска. Рекомендуется для финальных изделий, подарков и моделей, где важен внешний вид. <span class="pros">+ Гладкая поверхность, эстетичный вид</span> <span class="cons">- Увеличивает стоимость и время изготовления</span>',
-  color: '<strong>Цвет материала.</strong> Доступные цвета зависят от выбранного материала. Наличие конкретного цвета уточняйте у исполнителя.'
-};
-
-// ===== RENDER =====
-var cfg, techKeys, qKeys, iKeys;
-var dimW, dimD, dimH, weightDisp, techRadios, matSelect, colorSelect, qualSelect, infSelect, postChk, commentInp, priceDisp, timeDisp, orderBtn;
-
-function render() {
-  cfg = loadConfig();
-
-  // Если конфиг отозван — показать заглушку
-  if (cfg && cfg._revoked) {
-    document.getElementById('app').innerHTML = '<header><h1>3D Print Calculator</h1></header>'
-      + '<div class="card" style="text-align:center;padding:40px 20px;">'
-      + '<div style="font-size:2.5rem;margin-bottom:16px;">&#128274;</div>'
-      + '<h2 style="margin-bottom:12px;">Ссылка устарела</h2>'
-      + '<p class="desc">Исполнитель "' + esc(cfg._executor) + '" больше не использует эту ссылку.</p>'
-      + '<p class="desc" style="margin-top:8px;">Пожалуйста, запросите новую ссылку у исполнителя.</p>'
-      + '</div>';
-    return;
-  }
-
-  techKeys = []; var tks = Object.keys(cfg.technologies);
-  for (var ti = 0; ti < tks.length; ti++) { if (cfg.technologies[tks[ti]].enabled) techKeys.push(tks[ti]); }
-  qKeys = Object.keys(cfg.quality);
-  iKeys = Object.keys(cfg.infill);
-  var exec = cfg.executor || null;
-
-  var h = '<header><h1>3D Print Calculator</h1><p>Рассчитайте стоимость и сформируйте заказ на 3D-печать</p></header>';
-
-  if (exec && exec.name) {
-    h += '<div class="executor-info">';
-    h += '<div><div class="l">Исполнитель</div><div class="v">' + esc(exec.name) + '</div></div>';
-    if (exec.email) h += '<div><div class="l">Email</div><div class="v"><a href="mailto:' + esc(exec.email) + '">' + esc(exec.email) + '</a></div></div>';
-    if (exec.telegram) h += '<div><div class="l">Telegram</div><div class="v"><a href="' + esc(exec.telegram) + '" target="_blank">' + esc(exec.telegram) + '</a></div></div>';
-    if (exec.phone) h += '<div><div class="l">Телефон</div><div class="v">' + esc(exec.phone) + '</div></div>';
-    h += '</div>';
-  }
-
-  h += '<div class="notice">Указанные цены и время печати являются предварительными. Точная стоимость рассчитывается после анализа модели.</div>';
-
-  h += '<div class="info">';
-  for (var ti2 = 0; ti2 < techKeys.length; ti2++) {
-    var t = cfg.technologies[techKeys[ti2]];
-    var mats = []; var mk2 = Object.keys(t.materials);
-    for (var mi2 = 0; mi2 < mk2.length; mi2++) { if (t.materials[mk2[mi2]].enabled) mats.push(t.materials[mk2[mi2]].label); }
-    h += '<strong>' + esc(t.label) + '</strong>: ' + esc(mats.join(', ')) + '<br>';
-  }
-  h += '</div>';
-
-  // === FORM ===
-  h += '<div class="card"><div class="card-title">Параметры заказа</div>';
-
-  // Dimensions
-  h += '<div class="field"><label>Габариты модели (мм)</label>';
-  h += '<div class="dims-row">';
-  h += '<div class="field"><label for="dimW">Ширина</label><input type="number" id="dimW" min="1" step="1" value="50"></div>';
-  h += '<div class="field"><label for="dimD">Глубина</label><input type="number" id="dimD" min="1" step="1" value="50"></div>';
-  h += '<div class="field"><label for="dimH">Высота</label><input type="number" id="dimH" min="1" step="1" value="50"></div>';
-  h += '</div><div class="calc-weight" id="weightDisplay">Вес модели: --</div>';
-  h += '<div class="detail">Чем больше габариты, тем выше вес и итоговая цена. Для сложных моделей с большим количеством пустот фактический вес может отличаться от расчётного. Исполнитель уточнит точный вес после анализа модели.</div></div>';
-
-  // Technology
-  h += '<div class="field"><label>Технология печати</label><div class="radio-group">';
-  for (var ti3 = 0; ti3 < techKeys.length; ti3++) {
-    var tk3 = techKeys[ti3]; var t3 = cfg.technologies[tk3];
-    h += '<div class="radio-item"><input type="radio" name="tech" id="tech-' + tk3 + '" value="' + tk3 + '"' + (ti3 === 0 ? ' checked' : '') + '><label class="radio-label" for="tech-' + tk3 + '">' + esc(t3.label) + '</label></div>';
-  }
-  h += '</div><div class="detail" id="techDesc">' + (desc.tech[techKeys[0]] || '') + '</div></div>';
-
-  // Material
-  h += '<div class="field"><label for="materialSelect">Материал</label><select id="materialSelect"></select>';
-  h += '<div class="detail" id="matDesc">Выберите материал, чтобы увидеть описание.</div></div>';
-
-  // Color
-  h += '<div class="field"><label for="colorSelect">Цвет</label>';
-  h += '<select id="colorSelect"><option>—</option></select>';
-  h += '<div class="detail">' + desc.color + '</div></div>';
-
-  // Quality
-  h += '<div class="field"><label for="qualitySelect">Высота слоя (качество)</label><select id="qualitySelect">';
-  for (var qi = 0; qi < qKeys.length; qi++) {
-    h += '<option value="' + qKeys[qi] + '"' + (qi === 1 ? ' selected' : '') + '>' + esc(cfg.quality[qKeys[qi]].label) + '</option>';
-  }
-  h += '</select><div class="detail" id="qualityDesc">' + (desc.quality[qKeys[1]] || '') + '</div></div>';
-
-  // Infill
-  h += '<div class="field"><label for="infillSelect">Заполнение</label><select id="infillSelect">';
-  for (var ii = 0; ii < iKeys.length; ii++) {
-    h += '<option value="' + iKeys[ii] + '"' + (ii === 1 ? ' selected' : '') + '>' + esc(cfg.infill[iKeys[ii]].label) + '</option>';
-  }
-  h += '</select><div class="detail" id="infillDesc">' + (desc.infill[iKeys[1]] || '') + '</div></div>';
-
-  // Post-processing
-  h += '<div class="field"><label class="checkbox-field">';
-  h += '<input type="checkbox" id="postprocessing"><span class="checkmark"></span>Нужна постобработка (снятие поддержек / шлифовка)</label>';
-  h += '<div class="detail">' + desc.post + '</div></div>';
-
-  // Comment
-  h += '<div class="field" style="margin-top:14px;"><label for="commentInput">Комментарий к заказу</label>';
-  h += '<textarea id="commentInput" placeholder="Цвет, размеры, особые пожелания..." style="margin-top:4px;"></textarea></div>';
-  h += '</div>';
-
-  // Results
-  h += '<div class="card"><div class="card-title">Расчёт стоимости</div>';
-  h += '<div class="results">';
-  h += '<div class="result-item"><div class="label">Цена</div><div class="value price" id="priceDisplay">--</div></div>';
-  h += '<div class="result-item"><div class="label">Время печати</div><div class="value time" id="timeDisplay">--</div></div>';
-  h += '</div><button class="btn" id="orderBtn">Сформировать заказ</button></div>';
-
-  document.getElementById('app').innerHTML = h;
-  bindUI();
-}
-
-function $(id){return document.getElementById(id)}
-function getTech(){var c=document.querySelector('input[name="tech"]:checked');return c?c.value:techKeys[0]}
-function getTechCfg(){return cfg.technologies[getTech()]}
-
-function bindUI(){
-  dimW=$('dimW');dimD=$('dimD');dimH=$('dimH');weightDisp=$('weightDisplay');
-  techRadios=document.querySelectorAll('input[name="tech"]');
-  matSelect=$('materialSelect');colorSelect=$('colorSelect');
-  qualSelect=$('qualitySelect');infSelect=$('infillSelect');
-  postChk=$('postprocessing');commentInp=$('commentInput');
-  priceDisp=$('priceDisplay');timeDisp=$('timeDisplay');orderBtn=$('orderBtn');
-
-  updateMaterials();updateColors();updateDescs();
-
-  techRadios.forEach(function(r){r.addEventListener('change',function(){updateMaterials();updateColors();updateDescs();calculate()})});
-  dimW.addEventListener('input',calculate);dimD.addEventListener('input',calculate);dimH.addEventListener('input',calculate);
-  matSelect.addEventListener('change',function(){updateColors();updateDescs();calculate()});
-  colorSelect.addEventListener('change',calculate);
-  qualSelect.addEventListener('change',function(){updateDescs();calculate()});
-  infSelect.addEventListener('change',function(){updateDescs();calculate()});
-  postChk.addEventListener('change',calculate);
-  orderBtn.addEventListener('click',generateOrderFile);
-  calculate();
-}
-
-function updateMaterials(){
-  var tech=getTechCfg();if(!tech)return;
-  matSelect.innerHTML='';var mk=Object.keys(tech.materials);var first=null;
-  for(var i=0;i<mk.length;i++){var m=tech.materials[mk[i]];if(!m.enabled)continue;if(!first)first=mk[i];
-    var opt=document.createElement('option');opt.value=mk[i];opt.textContent=m.label;matSelect.appendChild(opt);}
-}
-
-function updateColors(){
-  var tech=getTechCfg();if(!tech)return;var mat=tech.materials[matSelect.value];
-  colorSelect.innerHTML='';
-  if(mat&&mat.colors&&mat.colors.length){for(var i=0;i<mat.colors.length;i++){var opt=document.createElement('option');opt.value=mat.colors[i];opt.textContent=mat.colors[i];colorSelect.appendChild(opt);}}
-  else{var opt=document.createElement('option');opt.value='';opt.textContent='—';colorSelect.appendChild(opt);}
-}
-
-function updateDescs(){
-  var tech=getTechCfg();
-  var td=$('techDesc');if(td)td.innerHTML=desc.tech[getTech()]||'';
-  var md=$('matDesc');if(md)md.innerHTML=desc.mat[matSelect.value]||'Выберите материал.';
-  var qd=$('qualityDesc');if(qd)qd.innerHTML=desc.quality[qualSelect.value]||'';
-  var id=$('infillDesc');if(id)id.innerHTML=desc.infill[infSelect.value]||'';
-}
-
-function getMatCfg(){var t=getTechCfg();return t?t.materials[matSelect.value]||null:null}
-
-function calcWeight(){
-  var w=parseFloat(dimW.value)||0,d=parseFloat(dimD.value)||0,h=parseFloat(dimH.value)||0;
-  var mat=getMatCfg();
-  if(!w||!d||!h||!mat){weightDisp.textContent='Вес модели: --';return 0;}
-  var volume=(w*d*h)/1000;var weight=Math.max(volume*(mat.density||1.24),1);
-  weightDisp.textContent='Вес модели: '+weight.toFixed(1)+' г (объём '+volume.toFixed(1)+' см3)';return weight;
-}
-
-function calculate(){
-  var weight=calcWeight();var tech=getTech();var mat=getMatCfg();
-  var qKey=qualSelect.value,iKey=infSelect.value,needPost=postChk.checked;
-  var qc=cfg.quality[qKey],ic=cfg.infill[iKey];
-  var pc=cfg.postProcessing[tech]||cfg.postProcessing.fdm||200;
-  if(!mat||!qc||!ic||!weight){priceDisp.textContent='--';timeDisp.textContent='--';return;}
-  var price=weight*mat.pricePerGram*qc.priceMultiplier*ic.priceMultiplier;
-  if(needPost)price+=pc;price=Math.max(price,cfg.minPrice);
-  var time=weight*mat.timePerGram*qc.timeMultiplier*ic.timeMultiplier;
-  time=Math.max(time,cfg.minTime);
-  priceDisp.textContent=Math.round(price)+' руб.';timeDisp.textContent=formatTime(Math.round(time));
-}
-
-function formatTime(m){if(m<60)return m+' мин.';var h=Math.floor(m/60);return m%60>0?h+' ч. '+(m%60)+' мин.':h+' ч.'}
-
-function generateOrderFile(){
-  var w=parseFloat(dimW.value)||0,d=parseFloat(dimD.value)||0,h=parseFloat(dimH.value)||0;
-  var tech=getTech(),tc=cfg.technologies[tech];var tl=tc?tc.label:tech;
-  var mat=getMatCfg(),ml=mat?mat.label:'--';
-  var color=colorSelect?colorSelect.value||'--':'--';
-  var ql=qualSelect.options[qualSelect.selectedIndex].textContent;
-  var il=infSelect.options[infSelect.selectedIndex].textContent;
-  var np=postChk.checked,cm=commentInp.value.trim()||'--';
-  var qc=cfg.quality[qualSelect.value],ic=cfg.infill[infSelect.value];
-  var pc=cfg.postProcessing[tech]||cfg.postProcessing.fdm||200;
-  var v=(w*d*h)/1000,g=Math.max(v*(mat?mat.density||1.24:1.24),1);
-  var price=Math.max(g*(mat?mat.pricePerGram:5)*qc.priceMultiplier*ic.priceMultiplier+(np?pc:0),cfg.minPrice);
-  var time=Math.max(g*(mat?mat.timePerGram:8)*qc.timeMultiplier*ic.timeMultiplier,cfg.minTime);
-  var exec=cfg.executor||null;
-  var lines=['===================================','        ЗАКАЗ 3D-ПЕЧАТИ','===================================','','Технология:      '+tl,'Материал:        '+ml,'Цвет:            '+color,'Габариты (мм):   '+w+' x '+d+' x '+h,'Вес модели:      '+g.toFixed(1)+' г','Высота слоя:     '+ql,'Заполнение:      '+il,'Постобработка:   '+(np?'Да':'Нет'),'','--- Расчёт ---','Итоговая цена:   '+Math.round(price)+' руб.','Время печати:    '+formatTime(Math.round(time)),'','--- Комментарий ---',cm,''];
-  if(exec){if(exec.name)lines.push('Исполнитель:     '+exec.name);if(exec.email)lines.push('Email:           '+exec.email);if(exec.telegram)lines.push('Telegram:        '+exec.telegram);if(exec.phone)lines.push('Телефон:         '+exec.phone);lines.push('');}
-  lines.push('===================================');lines.push('  Сформировано на 3dprint-calc.ru');lines.push('===================================');
-  var blob=new Blob([lines.join('\r\n')],{type:'text/plain;charset=utf-8'});
-  var url=URL.createObjectURL(blob);var a=document.createElement('a');
-  a.href=url;a.download='zakaz_3d_pechat.txt';
-  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
-}
-
-render();
-</script>
+</div>
 </body>
 </html>
